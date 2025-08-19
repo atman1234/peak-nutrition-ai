@@ -28,6 +28,7 @@ const lightColors = {
   backgroundSecondary: '#F1F5F9',
   surface: '#FFFFFF',
   surfaceAlt: '#F1F5F9',
+  card: '#FFFFFF',
   
   // Text colors
   text: '#0F172A',
@@ -77,6 +78,7 @@ const darkColors = {
   backgroundSecondary: '#1E293B',
   surface: '#1E293B',
   surfaceAlt: '#334155',
+  card: '#1E293B',
   
   // Text colors (inverted)
   text: '#F8FAFC',

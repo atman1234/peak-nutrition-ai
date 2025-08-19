@@ -1,20 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { View, Dimensions, ScrollView, Text } from 'react-native';
-import {
-  VictoryBar,
-  VictoryChart,
-  VictoryAxis,
-  VictoryLabel,
-  VictoryLine,
-  VictoryContainer,
-  VictoryTooltip,
-  VictoryVoronoiContainer,
-} from 'victory-native';
+import { View, Dimensions, ScrollView, Text, StyleSheet } from 'react-native';
+import { CartesianChart, Bar, Line, useChartPressState } from 'victory-native';
 import { format, subDays, startOfDay } from 'date-fns';
-import { useChartTheme, useChartColors, chartFormatters } from './common/ChartTheme';
+import { useChartColors, chartFormatters } from './common/ChartTheme';
 import { ChartContainer, ChartPeriodSelector, ChartEmptyState } from './common/ChartContainer';
 import { useFoodLogs } from '@/hooks/useFoodLogs';
 import { useProfile } from '@/hooks/useProfile';
+import { useTheme } from '@/constants/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -36,10 +28,10 @@ export const CalorieChart: React.FC<CalorieChartProps> = ({
   height = 300,
 }) => {
   const [selectedPeriod, setSelectedPeriod] = useState(days.toString());
-  const chartTheme = useChartTheme();
   const chartColors = useChartColors();
+  const { colors } = useTheme();
   const { profile } = useProfile();
-  const { foodLogs, loading, error } = useFoodLogs();
+  const { foodLogs } = useFoodLogs();
 
   // Calculate daily calorie target
   const dailyTarget = profile?.target_calories || 2000;
@@ -57,20 +49,22 @@ export const CalorieChart: React.FC<CalorieChartProps> = ({
       
       // Filter food logs for this date
       const dayLogs = foodLogs?.filter(log => {
+        if (!log.created_at) return false;
         const logDate = format(new Date(log.created_at), 'yyyy-MM-dd');
         return logDate === dateStr;
       }) || [];
 
       // Calculate total calories for the day
       const totalCalories = dayLogs.reduce((sum, log) => {
-        return sum + (log.food_item?.calories || 0) * (log.quantity || 0);
+        const calories = log.calories_consumed || 0;
+        return sum + calories;
       }, 0);
 
       data.push({
-        x: format(date, 'MMM dd'),
-        y: Math.round(totalCalories),
+        day: format(date, 'MMM dd'),
+        calories: Math.round(totalCalories),
+        target: dailyTarget,
         date: date,
-        label: `${Math.round(totalCalories)} cal`,
         percentage: Math.round((totalCalories / dailyTarget) * 100),
       });
     }
@@ -78,43 +72,21 @@ export const CalorieChart: React.FC<CalorieChartProps> = ({
     return data;
   }, [foodLogs, selectedPeriod, dailyTarget]);
 
-  // Determine bar colors based on target achievement
-  const getBarColor = (datum: any) => {
-    const percentage = (datum.y / dailyTarget) * 100;
-    if (percentage < 90) return chartColors.calories.low;
-    if (percentage <= 110) return chartColors.calories.medium;
-    return chartColors.calories.high;
-  };
+  // Chart press state for interactions
+  const { state, isActive } = useChartPressState({ 
+    x: 0, 
+    y: { calories: 0 } 
+  });
 
   // Calculate max Y value for chart domain
   const maxY = useMemo(() => {
-    const maxValue = Math.max(...chartData.map(d => d.y), dailyTarget);
+    const maxValue = Math.max(...chartData.map(d => d.calories), dailyTarget);
     return Math.ceil(maxValue / 500) * 500; // Round up to nearest 500
   }, [chartData, dailyTarget]);
 
-  if (loading) {
-    return (
-      <ChartContainer
-        title="Daily Calories"
-        subtitle={`Target: ${dailyTarget} cal/day`}
-        loading={true}
-        height={height}
-      />
-    );
-  }
+  const isEmpty = chartData.every(d => d.calories === 0);
 
-  if (error) {
-    return (
-      <ChartContainer
-        title="Daily Calories"
-        subtitle={`Target: ${dailyTarget} cal/day`}
-        error="Failed to load calorie data"
-        height={height}
-      />
-    );
-  }
-
-  if (chartData.every(d => d.y === 0)) {
+  if (isEmpty) {
     return (
       <ChartContainer
         title="Daily Calories"
@@ -134,7 +106,50 @@ export const CalorieChart: React.FC<CalorieChartProps> = ({
   }
 
   const chartWidth = Math.max(screenWidth - 32, 350);
-  const barWidth = Math.max(20, (chartWidth - 100) / chartData.length - 10);
+
+  const styles = StyleSheet.create({
+    chartWrapper: {
+      paddingHorizontal: 16,
+    },
+    summaryContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    summaryItem: {
+      alignItems: 'center',
+    },
+    summaryLabel: {
+      fontSize: 12,
+      color: colors.textSecondary,
+    },
+    summaryValue: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    tooltipContainer: {
+      position: 'absolute',
+      backgroundColor: colors.card,
+      padding: 8,
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    tooltipText: {
+      fontSize: 12,
+      color: colors.text,
+      fontWeight: '500',
+    },
+  });
 
   return (
     <ChartContainer
@@ -151,136 +166,90 @@ export const CalorieChart: React.FC<CalorieChartProps> = ({
       }
     >
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={{ paddingHorizontal: 16 }}>
-          <VictoryChart
-            theme={chartTheme}
-            width={chartWidth}
-            height={height}
-            padding={{ left: 70, bottom: 60, right: 40, top: 20 }}
-            domain={{ y: [0, maxY] }}
-            containerComponent={
-              <VictoryVoronoiContainer
-                labels={({ datum }) => `${datum.label}\n${datum.percentage}% of target`}
-                labelComponent={
-                  <VictoryTooltip
-                    cornerRadius={4}
-                    flyoutStyle={{
-                      stroke: chartTheme.tooltip.flyoutStyle.stroke,
-                      fill: chartTheme.tooltip.flyoutStyle.fill,
-                    }}
-                    style={{
-                      fontSize: 11,
-                      fill: chartTheme.tooltip.style.fill,
-                    }}
-                  />
-                }
-              />
-            }
+        <View style={styles.chartWrapper}>
+          <CartesianChart
+            data={chartData}
+            xKey="day"
+            yKeys={["calories"]}
+            domainPadding={{ left: 50, right: 50, top: 20, bottom: 50 }}
+            chartPressState={state}
           >
-            {/* X Axis */}
-            <VictoryAxis
-              dependentAxis={false}
-              style={{
-                axis: chartTheme.axis.style.axis,
-                tickLabels: {
-                  ...chartTheme.axis.style.tickLabels,
-                  angle: chartData.length > 7 ? -45 : 0,
-                  textAnchor: chartData.length > 7 ? 'end' : 'middle',
-                },
-                grid: { stroke: 'transparent' },
-              }}
-              fixLabelOverlap={true}
-            />
-            
-            {/* Y Axis */}
-            <VictoryAxis
-              dependentAxis
-              style={{
-                axis: chartTheme.axis.style.axis,
-                tickLabels: chartTheme.axis.style.tickLabels,
-                grid: chartTheme.axis.style.grid,
-              }}
-              tickFormat={(t) => chartFormatters.abbreviateNumber(t)}
-              label="Calories"
-              axisLabelComponent={
-                <VictoryLabel
-                  dy={-30}
-                  style={chartTheme.axis.style.axisLabel}
+            {({ points, chartBounds }) => (
+              <>
+                {/* Target line */}
+                {showTarget && (
+                  <Line
+                    points={[
+                      { x: chartBounds.left, y: chartBounds.top + (chartBounds.height * (1 - dailyTarget / maxY)) },
+                      { x: chartBounds.right, y: chartBounds.top + (chartBounds.height * (1 - dailyTarget / maxY)) },
+                    ]}
+                    color={chartColors.calories.target}
+                    strokeWidth={2}
+                    pathEffect={{ stroke: { dashArray: [5, 5] } }}
+                  />
+                )}
+                
+                {/* Bar chart */}
+                <Bar
+                  points={points.calories}
+                  chartBounds={chartBounds}
+                  color={({ datum }) => {
+                    const percentage = (datum.calories / dailyTarget) * 100;
+                    if (percentage < 90) return chartColors.calories.low;
+                    if (percentage <= 110) return chartColors.calories.medium;
+                    return chartColors.calories.high;
+                  }}
+                  barWidth={20}
+                  roundedCorners={{ topLeft: 4, topRight: 4 }}
                 />
-              }
-            />
-            
-            {/* Target Line */}
-            {showTarget && (
-              <VictoryLine
-                data={[
-                  { x: chartData[0]?.x, y: dailyTarget },
-                  { x: chartData[chartData.length - 1]?.x, y: dailyTarget },
-                ]}
-                style={{
-                  data: {
-                    stroke: chartColors.calories.target,
-                    strokeWidth: 2,
-                    strokeDasharray: '5,5',
-                  },
-                }}
-              />
+
+                {/* Tooltip */}
+                {isActive && (
+                  <View
+                    style={[
+                      styles.tooltipContainer,
+                      {
+                        left: state.x.position - 40,
+                        top: state.y.calories.position - 40,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.tooltipText}>
+                      {chartFormatters.calories(state.y.calories.value)}
+                    </Text>
+                    <Text style={styles.tooltipText}>
+                      {Math.round((state.y.calories.value / dailyTarget) * 100)}% of target
+                    </Text>
+                  </View>
+                )}
+              </>
             )}
-            
-            {/* Bar Chart */}
-            <VictoryBar
-              data={chartData}
-              style={{
-                data: {
-                  fill: ({ datum }) => getBarColor(datum),
-                  width: barWidth,
-                },
-              }}
-              cornerRadius={{ top: 4 }}
-              animate={{
-                duration: 800,
-                onLoad: { duration: 500 },
-              }}
-            />
-          </VictoryChart>
+          </CartesianChart>
         </View>
       </ScrollView>
       
       {/* Summary Stats */}
-      <View style={{ 
-        flexDirection: 'row', 
-        justifyContent: 'space-around', 
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderTopWidth: 1,
-        borderTopColor: chartTheme.axis.style.axis.stroke,
-      }}>
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: chartTheme.axis.style.tickLabels.fill }}>
-            Average
-          </Text>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: chartTheme.axis.style.axisLabel.fill }}>
+      <View style={styles.summaryContainer}>
+        <View style={styles.summaryItem}>
+          <Text style={styles.summaryLabel}>Average</Text>
+          <Text style={styles.summaryValue}>
             {chartFormatters.calories(
-              chartData.reduce((sum, d) => sum + d.y, 0) / chartData.length
+              chartData.reduce((sum, d) => sum + d.calories, 0) / chartData.length
             )}
           </Text>
         </View>
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: chartTheme.axis.style.tickLabels.fill }}>
-            Total
-          </Text>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: chartTheme.axis.style.axisLabel.fill }}>
+        <View style={styles.summaryItem}>
+          <Text style={styles.summaryLabel}>Total</Text>
+          <Text style={styles.summaryValue}>
             {chartFormatters.abbreviateNumber(
-              chartData.reduce((sum, d) => sum + d.y, 0)
+              chartData.reduce((sum, d) => sum + d.calories, 0)
             )}
           </Text>
         </View>
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: chartTheme.axis.style.tickLabels.fill }}>
-            Days on Target
-          </Text>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: chartTheme.axis.style.axisLabel.fill }}>
-            {chartData.filter(d => d.y >= dailyTarget * 0.9 && d.y <= dailyTarget * 1.1).length}
+        <View style={styles.summaryItem}>
+          <Text style={styles.summaryLabel}>Days on Target</Text>
+          <Text style={styles.summaryValue}>
+            {chartData.filter(d => d.calories >= dailyTarget * 0.9 && d.calories <= dailyTarget * 1.1).length}
           </Text>
         </View>
       </View>
