@@ -156,7 +156,7 @@ export default function AnalyticsScreen() {
   );
 
   const renderAIReviewTab = () => (
-    <AIReviewTab timePeriod="30d" />
+    <AIReviewTab initialTimePeriod="30d" />
   );
 
   const renderTabContent = () => {

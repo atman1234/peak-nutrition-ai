@@ -83,26 +83,16 @@ export const MacroTrendsChart: React.FC<MacroTrendsChartProps> = ({
     return data;
   }, [foodLogs, selectedPeriod, isLoading]);
 
-  const isEmpty = trendData.every(d => d.protein === 0 && d.carbs === 0 && d.fat === 0);
-
-  if (isEmpty) {
-    return (
-      <ChartContainer
-        title="Macro Trends"
-        subtitle="Daily macro intake over time"
-        height={height}
-        actions={
-          <ChartPeriodSelector
-            periods={periodOptions}
-            selectedPeriod={selectedPeriod}
-            onPeriodChange={setSelectedPeriod}
-          />
-        }
-      >
-        <ChartEmptyState message="No macro data available for this period" />
-      </ChartContainer>
-    );
-  }
+  // Calculate averages for legend - MUST be before any conditional returns
+  const averages = useMemo(() => {
+    if (trendData.length === 0) return { protein: 0, carbs: 0, fat: 0 };
+    
+    return {
+      protein: Math.round(trendData.reduce((sum, d) => sum + d.protein, 0) / trendData.length),
+      carbs: Math.round(trendData.reduce((sum, d) => sum + d.carbs, 0) / trendData.length),
+      fat: Math.round(trendData.reduce((sum, d) => sum + d.fat, 0) / trendData.length),
+    };
+  }, [trendData]);
 
   const styles = StyleSheet.create({
     chartWrapper: {
@@ -137,16 +127,26 @@ export const MacroTrendsChart: React.FC<MacroTrendsChartProps> = ({
     },
   });
 
-  // Calculate averages for legend
-  const averages = useMemo(() => {
-    if (trendData.length === 0) return { protein: 0, carbs: 0, fat: 0 };
-    
-    return {
-      protein: Math.round(trendData.reduce((sum, d) => sum + d.protein, 0) / trendData.length),
-      carbs: Math.round(trendData.reduce((sum, d) => sum + d.carbs, 0) / trendData.length),
-      fat: Math.round(trendData.reduce((sum, d) => sum + d.fat, 0) / trendData.length),
-    };
-  }, [trendData]);
+  const isEmpty = trendData.every(d => d.protein === 0 && d.carbs === 0 && d.fat === 0);
+
+  if (isEmpty) {
+    return (
+      <ChartContainer
+        title="Macro Trends"
+        subtitle="Daily macro intake over time"
+        height={height}
+        actions={
+          <ChartPeriodSelector
+            periods={periodOptions}
+            selectedPeriod={selectedPeriod}
+            onPeriodChange={setSelectedPeriod}
+          />
+        }
+      >
+        <ChartEmptyState message="No macro data available for this period" />
+      </ChartContainer>
+    );
+  }
 
   return (
     <ChartContainer

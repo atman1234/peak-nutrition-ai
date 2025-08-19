@@ -1,19 +1,37 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useMemo, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { useTheme } from '@/constants/theme';
 import { useHistoricalAnalytics } from '@/hooks/useHistoricalAnalytics';
-import { generateNutritionInsights } from '@/lib/historical-analytics';
-import { format, subDays } from 'date-fns';
+import { generateInsights } from '@/lib/historical-analytics';
+import { format } from 'date-fns';
+import { ChartPeriodSelector } from '../charts/common/ChartContainer';
 
 interface AIReviewTabProps {
-  timePeriod?: '7d' | '30d' | '90d';
+  initialTimePeriod?: '7d' | '30d' | '90d';
 }
 
+const periodOptions = [
+  { label: 'Today', value: '1' },
+  { label: '7D', value: '7' },
+  { label: '30D', value: '30' },
+  { label: '90D', value: '90' },
+];
+
 export const AIReviewTab: React.FC<AIReviewTabProps> = ({
-  timePeriod = '30d'
+  initialTimePeriod = '30d'
 }) => {
   const { colors } = useTheme();
-  const { dailyAchievements, isLoading } = useHistoricalAnalytics({
+  const [selectedPeriod, setSelectedPeriod] = useState(
+    initialTimePeriod === '7d' ? '7' : initialTimePeriod === '30d' ? '30' : '90'
+  );
+  const [refreshing, setRefreshing] = useState(false);
+  
+  // Map selected period to time period
+  const timePeriod = selectedPeriod === '1' ? '7d' : 
+                     selectedPeriod === '7' ? '7d' : 
+                     selectedPeriod === '30' ? '30d' : '90d';
+  
+  const { dailyAchievements, isLoading, refetch } = useHistoricalAnalytics({
     timePeriod,
     includeStreaks: true,
     includeConsistency: true,
@@ -22,9 +40,21 @@ export const AIReviewTab: React.FC<AIReviewTabProps> = ({
     goalTypes: ['calories', 'protein', 'carbs', 'fat'],
   });
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    if (refetch) {
+      await refetch();
+    }
+    setRefreshing(false);
+  }, [refetch]);
+
   const insights = useMemo(() => {
     if (!dailyAchievements || dailyAchievements.length === 0) return [];
-    return generateNutritionInsights(dailyAchievements);
+    // Generate insights needs streaks and consistency data
+    const goalTypes = ['calories', 'protein', 'carbs', 'fat'];
+    const streaks = goalTypes.map((goalType: any) => ({ goalType, currentStreak: 0, longestStreak: 0 }));
+    const consistency = goalTypes.map((goalType: any) => ({ goalType, score: 0 }));
+    return generateInsights(streaks as any, consistency as any, dailyAchievements);
   }, [dailyAchievements]);
 
   const styles = StyleSheet.create({
@@ -146,6 +176,7 @@ export const AIReviewTab: React.FC<AIReviewTabProps> = ({
   }
 
   const getPeriodLabel = (period: string) => {
+    if (selectedPeriod === '1') return 'Today';
     switch (period) {
       case '7d': return 'Last 7 days';
       case '30d': return 'Last 30 days';
@@ -153,6 +184,23 @@ export const AIReviewTab: React.FC<AIReviewTabProps> = ({
       default: return 'Recent period';
     }
   };
+  
+  // Filter insights for today if selected
+  const filteredInsights = useMemo(() => {
+    if (selectedPeriod === '1' && dailyAchievements && dailyAchievements.length > 0) {
+      // For "Today", generate insights from just today's data
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const todayData = dailyAchievements.filter(d => d.date === today);
+      if (todayData.length > 0) {
+        const goalTypes = ['calories', 'protein', 'carbs', 'fat'];
+        const streaks = goalTypes.map((goalType: any) => ({ goalType, currentStreak: 0, longestStreak: 0 }));
+        const consistency = goalTypes.map((goalType: any) => ({ goalType, score: 0 }));
+        return generateInsights(streaks as any, consistency as any, todayData);
+      }
+      return ['No data tracked for today yet. Start logging your meals to see AI insights.'];
+    }
+    return insights;
+  }, [insights, selectedPeriod, dailyAchievements]);
 
   const getInsightIcon = (insight: string) => {
     if (insight.toLowerCase().includes('streak')) return '🔥';
@@ -187,18 +235,35 @@ export const AIReviewTab: React.FC<AIReviewTabProps> = ({
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      style={styles.container} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={colors.primary}
+        />
+      }
+    >
       <View style={styles.header}>
-        <Text style={styles.title}>AI Nutrition Analysis</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <Text style={styles.title}>AI Nutrition Analysis</Text>
+          <ChartPeriodSelector
+            periods={periodOptions}
+            selectedPeriod={selectedPeriod}
+            onPeriodChange={setSelectedPeriod}
+          />
+        </View>
         <Text style={styles.subtitle}>
           Personalized insights based on your nutrition patterns and goal achievements
         </Text>
         <Text style={styles.periodInfo}>
-          Analysis period: {getPeriodLabel(timePeriod)} • {dailyAchievements.length} days of data
+          Analysis period: {getPeriodLabel(timePeriod)} • {selectedPeriod === '1' ? '1 day' : `${dailyAchievements?.length || 0} days`} of data
         </Text>
       </View>
 
-      {insights.length === 0 ? (
+      {filteredInsights.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>Not enough data for analysis</Text>
           <Text style={styles.emptySubtext}>
@@ -206,7 +271,7 @@ export const AIReviewTab: React.FC<AIReviewTabProps> = ({
           </Text>
         </View>
       ) : (
-        insights.map((insight, index) => (
+        filteredInsights.map((insight: string, index: number) => (
           <View key={index} style={styles.insightCard}>
             <View style={styles.insightHeader}>
               <Text style={styles.insightIcon}>{getInsightIcon(insight)}</Text>

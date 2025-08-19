@@ -119,7 +119,8 @@ export function calculateStreakData(
   let streakLength = 0
 
   for (const achievement of sortedAchievements) {
-    const isAchieved = achievement[goalType].achieved
+    const goalData = achievement[goalType];
+    const isAchieved = typeof goalData === 'object' && goalData !== null && 'achieved' in goalData ? goalData.achieved : false
 
     if (isAchieved) {
       lastAchievedDate = achievement.date
@@ -183,11 +184,20 @@ export function calculateConsistencyScore(
   dailyAchievements: DailyGoalAchievement[],
   timePeriod: TimePeriod
 ): ConsistencyScore {
-  const achievements = dailyAchievements.filter(a => a[goalType].target > 0)
+  const achievements = dailyAchievements.filter(a => {
+    const goalData = a[goalType];
+    return typeof goalData === 'object' && goalData !== null && 'target' in goalData ? goalData.target > 0 : false;
+  })
   const totalDays = achievements.length
-  const achievedDays = achievements.filter(a => a[goalType].achieved).length
+  const achievedDays = achievements.filter(a => {
+    const goalData = a[goalType];
+    return typeof goalData === 'object' && goalData !== null && 'achieved' in goalData ? goalData.achieved : false;
+  }).length
   
-  const percentages = achievements.map(a => a[goalType].percentage)
+  const percentages = achievements.map(a => {
+    const goalData = a[goalType];
+    return typeof goalData === 'object' && goalData !== null && 'percentage' in goalData ? goalData.percentage : 0;
+  })
   const averagePercentage = percentages.length > 0 
     ? percentages.reduce((sum, p) => sum + p, 0) / percentages.length 
     : 0
@@ -206,8 +216,14 @@ export function calculateConsistencyScore(
   // Determine trend (simple implementation - could be enhanced)
   const recentDays = achievements.slice(-7)
   const olderDays = achievements.slice(-14, -7)
-  const recentRate = recentDays.length > 0 ? (recentDays.filter(a => a[goalType].achieved).length / recentDays.length) : 0
-  const olderRate = olderDays.length > 0 ? (olderDays.filter(a => a[goalType].achieved).length / olderDays.length) : 0
+  const recentRate = recentDays.length > 0 ? (recentDays.filter(a => {
+    const goalData = a[goalType];
+    return typeof goalData === 'object' && goalData !== null && 'achieved' in goalData ? goalData.achieved : false;
+  }).length / recentDays.length) : 0
+  const olderRate = olderDays.length > 0 ? (olderDays.filter(a => {
+    const goalData = a[goalType];
+    return typeof goalData === 'object' && goalData !== null && 'achieved' in goalData ? goalData.achieved : false;
+  }).length / olderDays.length) : 0
   
   let trend: 'improving' | 'declining' | 'stable' = 'stable'
   if (recentRate > olderRate + 0.1) trend = 'improving'
@@ -413,10 +429,26 @@ export function analyzePatterns(dailyAchievements: DailyGoalAchievement[]): {
   const consistentGoal = Object.entries(weekdayData).reduce((consistent, [_, achievements]) => {
     if (achievements.length === 0) return consistent
     const goalScores = {
-      calories: achievements.reduce((sum, a) => sum + (a.calories.achieved ? 1 : 0), 0) / achievements.length,
-      protein: achievements.reduce((sum, a) => sum + (a.protein.achieved ? 1 : 0), 0) / achievements.length,
-      carbs: achievements.reduce((sum, a) => sum + (a.carbs.achieved ? 1 : 0), 0) / achievements.length,
-      fat: achievements.reduce((sum, a) => sum + (a.fat.achieved ? 1 : 0), 0) / achievements.length
+      calories: achievements.reduce((sum, a) => {
+        const goalData = a.calories;
+        const achieved = typeof goalData === 'object' && goalData !== null && 'achieved' in goalData ? goalData.achieved : false;
+        return sum + (achieved ? 1 : 0);
+      }, 0) / achievements.length,
+      protein: achievements.reduce((sum, a) => {
+        const goalData = a.protein;
+        const achieved = typeof goalData === 'object' && goalData !== null && 'achieved' in goalData ? goalData.achieved : false;
+        return sum + (achieved ? 1 : 0);
+      }, 0) / achievements.length,
+      carbs: achievements.reduce((sum, a) => {
+        const goalData = a.carbs;
+        const achieved = typeof goalData === 'object' && goalData !== null && 'achieved' in goalData ? goalData.achieved : false;
+        return sum + (achieved ? 1 : 0);
+      }, 0) / achievements.length,
+      fat: achievements.reduce((sum, a) => {
+        const goalData = a.fat;
+        const achieved = typeof goalData === 'object' && goalData !== null && 'achieved' in goalData ? goalData.achieved : false;
+        return sum + (achieved ? 1 : 0);
+      }, 0) / achievements.length
     }
     
     Object.entries(goalScores).forEach(([goal, score]) => {

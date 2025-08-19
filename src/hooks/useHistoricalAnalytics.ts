@@ -44,7 +44,8 @@ export function useHistoricalAnalytics(config: HistoricalAnalyticsConfig) {
   const {
     data: foodLogs = [],
     isLoading: isLoadingFoodLogs,
-    error: foodLogsError
+    error: foodLogsError,
+    refetch
   } = useQuery({
     queryKey: ['historicalFoodLogs', user?.id, dateRange.start, dateRange.end],
     queryFn: async (): Promise<FoodLog[]> => {
@@ -166,7 +167,9 @@ export function useHistoricalAnalytics(config: HistoricalAnalyticsConfig) {
     foodLogs, // Add raw food logs for chart components
     isLoading,
     error,
-    dateRange
+    dateRange,
+    refetch,
+    dailyAchievements: historicalMetrics?.dailyGoals || []
   }
 }
 
