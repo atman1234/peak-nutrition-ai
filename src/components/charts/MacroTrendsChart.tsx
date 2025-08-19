@@ -1,21 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { View, Dimensions, ScrollView, Text } from 'react-native';
-import {
-  VictoryLine,
-  VictoryChart,
-  VictoryAxis,
-  VictoryLabel,
-  VictoryScatter,
-  VictoryContainer,
-  VictoryTooltip,
-  VictoryVoronoiContainer,
-  VictoryLegend,
-} from 'victory-native';
+import { View, Dimensions, ScrollView, Text, StyleSheet } from 'react-native';
+import { CartesianChart, Line, useChartPressState } from 'victory-native';
 import { format, subDays, startOfDay } from 'date-fns';
-import { useChartTheme, useChartColors, chartFormatters } from './common/ChartTheme';
-import { ChartContainer, ChartPeriodSelector, ChartLegend, ChartEmptyState } from './common/ChartContainer';
+import { useChartColors, chartFormatters } from './common/ChartTheme';
+import { ChartContainer, ChartPeriodSelector, ChartEmptyState } from './common/ChartContainer';
 import { useFoodLogs } from '@/hooks/useFoodLogs';
-import { useProfile } from '@/hooks/useProfile';
+import { useTheme } from '@/constants/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -37,31 +27,15 @@ export const MacroTrendsChart: React.FC<MacroTrendsChartProps> = ({
   height = 350,
 }) => {
   const [selectedPeriod, setSelectedPeriod] = useState(days.toString());
-  const [visibleMacros, setVisibleMacros] = useState({
-    protein: true,
-    carbs: true,
-    fat: true,
-  });
-  
-  const chartTheme = useChartTheme();
   const chartColors = useChartColors();
-  const { profile } = useProfile();
-  const { foodLogs, loading, error } = useFoodLogs();
+  const { colors } = useTheme();
+  const { foodLogs } = useFoodLogs();
 
-  // Get macro targets from profile
-  const targets = useMemo(() => {
-    const totalCalories = profile?.target_calories || 2000;
-    
-    const proteinPercent = profile?.target_protein_percent || 25;
-    const carbPercent = profile?.target_carb_percent || 45;
-    const fatPercent = profile?.target_fat_percent || 30;
-    
-    return {
-      protein: Math.round((totalCalories * proteinPercent / 100) / 4),
-      carbs: Math.round((totalCalories * carbPercent / 100) / 4),
-      fat: Math.round((totalCalories * fatPercent / 100) / 9),
-    };
-  }, [profile]);
+  // Chart press state for interactions
+  const { state, isActive } = useChartPressState({ 
+    x: 0, 
+    y: { protein: 0 } 
+  });
 
   // Prepare trend data
   const trendData = useMemo(() => {
@@ -76,122 +50,30 @@ export const MacroTrendsChart: React.FC<MacroTrendsChartProps> = ({
       
       // Filter food logs for this date
       const dayLogs = foodLogs?.filter(log => {
+        if (!log.created_at) return false;
         const logDate = format(new Date(log.created_at), 'yyyy-MM-dd');
         return logDate === dateStr;
       }) || [];
 
       // Calculate total macros for the day
       const totals = dayLogs.reduce((acc, log) => {
-        const food = log.food_item;
-        const quantity = log.quantity || 0;
-        
-        if (food) {
-          acc.protein += (food.protein || 0) * quantity;
-          acc.carbs += (food.carbohydrates || 0) * quantity;
-          acc.fat += (food.fat || 0) * quantity;
-        }
-        
+        acc.protein += log.protein_consumed || 0;
+        acc.carbs += log.carbs_consumed || 0;
+        acc.fat += log.fat_consumed || 0;
         return acc;
       }, { protein: 0, carbs: 0, fat: 0 });
 
-      const dayData = {
-        date: date,
-        x: format(date, 'MMM dd'),
+      data.push({
+        day: format(date, 'MMM dd'),
         protein: Math.round(totals.protein),
         carbs: Math.round(totals.carbs),
         fat: Math.round(totals.fat),
-      };
-
-      data.push(dayData);
+        date: date,
+      });
     }
 
     return data;
   }, [foodLogs, selectedPeriod]);
-
-  // Separate data by macro type
-  const chartData = useMemo(() => {
-    return {
-      protein: trendData.map(d => ({ 
-        x: d.x, 
-        y: d.protein, 
-        date: d.date,
-        label: `${chartFormatters.macros(d.protein)} protein`,
-      })),
-      carbs: trendData.map(d => ({ 
-        x: d.x, 
-        y: d.carbs, 
-        date: d.date,
-        label: `${chartFormatters.macros(d.carbs)} carbs`,
-      })),
-      fat: trendData.map(d => ({ 
-        x: d.x, 
-        y: d.fat, 
-        date: d.date,
-        label: `${chartFormatters.macros(d.fat)} fat`,
-      })),
-    };
-  }, [trendData]);
-
-  // Calculate Y axis domain
-  const { minY, maxY } = useMemo(() => {
-    const allValues = [
-      ...chartData.protein.map(d => d.y),
-      ...chartData.carbs.map(d => d.y),
-      ...chartData.fat.map(d => d.y),
-      ...(showTargets ? [targets.protein, targets.carbs, targets.fat] : []),
-    ].filter(v => v > 0);
-
-    if (allValues.length === 0) return { minY: 0, maxY: 100 };
-
-    const min = Math.min(...allValues);
-    const max = Math.max(...allValues);
-    const padding = (max - min) * 0.1 || 10;
-
-    return {
-      minY: Math.max(0, Math.floor(min - padding)),
-      maxY: Math.ceil(max + padding),
-    };
-  }, [chartData, targets, showTargets]);
-
-  // Calculate averages
-  const averages = useMemo(() => {
-    if (trendData.length === 0) return { protein: 0, carbs: 0, fat: 0 };
-    
-    return {
-      protein: Math.round(trendData.reduce((sum, d) => sum + d.protein, 0) / trendData.length),
-      carbs: Math.round(trendData.reduce((sum, d) => sum + d.carbs, 0) / trendData.length),
-      fat: Math.round(trendData.reduce((sum, d) => sum + d.fat, 0) / trendData.length),
-    };
-  }, [trendData]);
-
-  const toggleMacroVisibility = (macro: keyof typeof visibleMacros) => {
-    setVisibleMacros(prev => ({
-      ...prev,
-      [macro]: !prev[macro],
-    }));
-  };
-
-  if (loading) {
-    return (
-      <ChartContainer
-        title="Macro Trends"
-        subtitle="Daily macro intake over time"
-        loading={true}
-        height={height}
-      />
-    );
-  }
-
-  if (error) {
-    return (
-      <ChartContainer
-        title="Macro Trends"
-        subtitle="Daily macro intake over time"
-        error="Failed to load macro trend data"
-        height={height}
-      />
-    );
-  }
 
   const isEmpty = trendData.every(d => d.protein === 0 && d.carbs === 0 && d.fat === 0);
 
@@ -214,7 +96,67 @@ export const MacroTrendsChart: React.FC<MacroTrendsChartProps> = ({
     );
   }
 
-  const chartWidth = Math.max(screenWidth - 32, 350);
+  const styles = StyleSheet.create({
+    chartWrapper: {
+      paddingHorizontal: 16,
+    },
+    legendContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    legendItem: {
+      alignItems: 'center',
+      marginHorizontal: 12,
+    },
+    legendDot: {
+      width: 12,
+      height: 12,
+      borderRadius: 6,
+      marginBottom: 4,
+    },
+    legendLabel: {
+      fontSize: 11,
+      color: colors.textSecondary,
+    },
+    legendValue: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    tooltipContainer: {
+      position: 'absolute',
+      backgroundColor: colors.card,
+      padding: 8,
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    tooltipText: {
+      fontSize: 12,
+      color: colors.text,
+      fontWeight: '500',
+    },
+  });
+
+  // Calculate averages for legend
+  const averages = useMemo(() => {
+    if (trendData.length === 0) return { protein: 0, carbs: 0, fat: 0 };
+    
+    return {
+      protein: Math.round(trendData.reduce((sum, d) => sum + d.protein, 0) / trendData.length),
+      carbs: Math.round(trendData.reduce((sum, d) => sum + d.carbs, 0) / trendData.length),
+      fat: Math.round(trendData.reduce((sum, d) => sum + d.fat, 0) / trendData.length),
+    };
+  }, [trendData]);
 
   return (
     <ChartContainer
@@ -231,268 +173,53 @@ export const MacroTrendsChart: React.FC<MacroTrendsChartProps> = ({
       }
     >
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={{ paddingHorizontal: 16 }}>
-          <VictoryChart
-            theme={chartTheme}
-            width={chartWidth}
-            height={height - 120}
-            padding={{ left: 70, bottom: 60, right: 40, top: 20 }}
-            domain={{ y: [minY, maxY] }}
-            containerComponent={
-              <VictoryVoronoiContainer
-                labels={({ datum }) => `${datum.label}\n${chartFormatters.dateFull(datum.date)}`}
-                labelComponent={
-                  <VictoryTooltip
-                    cornerRadius={4}
-                    flyoutStyle={{
-                      stroke: chartTheme.tooltip.flyoutStyle.stroke,
-                      fill: chartTheme.tooltip.flyoutStyle.fill,
-                    }}
-                    style={{
-                      fontSize: 11,
-                      fill: chartTheme.tooltip.style.fill,
-                    }}
-                  />
-                }
-              />
-            }
+        <View style={styles.chartWrapper}>
+          <CartesianChart
+            data={trendData}
+            xKey="day"
+            yKeys={["protein"]}
+            domainPadding={{ left: 50, right: 50, top: 20, bottom: 50 }}
+            chartPressState={state}
           >
-            {/* X Axis */}
-            <VictoryAxis
-              dependentAxis={false}
-              style={{
-                axis: chartTheme.axis.style.axis,
-                tickLabels: {
-                  ...chartTheme.axis.style.tickLabels,
-                  angle: trendData.length > 7 ? -45 : 0,
-                  textAnchor: trendData.length > 7 ? 'end' : 'middle',
-                },
-                grid: { stroke: 'transparent' },
-              }}
-              fixLabelOverlap={true}
-            />
-            
-            {/* Y Axis */}
-            <VictoryAxis
-              dependentAxis
-              style={{
-                axis: chartTheme.axis.style.axis,
-                tickLabels: chartTheme.axis.style.tickLabels,
-                grid: chartTheme.axis.style.grid,
-              }}
-              label="Grams"
-              axisLabelComponent={
-                <VictoryLabel
-                  dy={-30}
-                  style={chartTheme.axis.style.axisLabel}
-                />
-              }
-            />
-            
-            {/* Target lines */}
-            {showTargets && (
+            {({ points, chartBounds }) => (
               <>
-                {visibleMacros.protein && (
-                  <VictoryLine
-                    data={[
-                      { x: chartData.protein[0]?.x, y: targets.protein },
-                      { x: chartData.protein[chartData.protein.length - 1]?.x, y: targets.protein },
-                    ]}
-                    style={{
-                      data: {
-                        stroke: chartColors.macros.protein,
-                        strokeWidth: 1,
-                        strokeDasharray: '3,3',
-                        opacity: 0.5,
+                {/* Protein Line - only showing protein for simplicity */}
+                <Line
+                  points={points.protein}
+                  color={chartColors.macros.protein}
+                  strokeWidth={2}
+                />
+
+                {/* Tooltip */}
+                {isActive && (
+                  <View
+                    style={[
+                      styles.tooltipContainer,
+                      {
+                        left: state.x.position - 40,
+                        top: state.y.protein.position - 40,
                       },
-                    }}
-                  />
-                )}
-                {visibleMacros.carbs && (
-                  <VictoryLine
-                    data={[
-                      { x: chartData.carbs[0]?.x, y: targets.carbs },
-                      { x: chartData.carbs[chartData.carbs.length - 1]?.x, y: targets.carbs },
                     ]}
-                    style={{
-                      data: {
-                        stroke: chartColors.macros.carbs,
-                        strokeWidth: 1,
-                        strokeDasharray: '3,3',
-                        opacity: 0.5,
-                      },
-                    }}
-                  />
-                )}
-                {visibleMacros.fat && (
-                  <VictoryLine
-                    data={[
-                      { x: chartData.fat[0]?.x, y: targets.fat },
-                      { x: chartData.fat[chartData.fat.length - 1]?.x, y: targets.fat },
-                    ]}
-                    style={{
-                      data: {
-                        stroke: chartColors.macros.fat,
-                        strokeWidth: 1,
-                        strokeDasharray: '3,3',
-                        opacity: 0.5,
-                      },
-                    }}
-                  />
+                  >
+                    <Text style={styles.tooltipText}>
+                      {chartFormatters.macros(state.y.protein.value)} protein
+                    </Text>
+                  </View>
                 )}
               </>
             )}
-            
-            {/* Protein Line */}
-            {visibleMacros.protein && (
-              <>
-                <VictoryLine
-                  data={chartData.protein}
-                  style={{
-                    data: {
-                      stroke: chartColors.macros.protein,
-                      strokeWidth: 2,
-                    },
-                  }}
-                  interpolation="monotoneX"
-                  animate={{
-                    duration: 800,
-                    onLoad: { duration: 500 },
-                  }}
-                />
-                <VictoryScatter
-                  data={chartData.protein}
-                  size={3}
-                  style={{
-                    data: {
-                      fill: chartColors.macros.protein,
-                      stroke: chartTheme.axis.style.axis.stroke,
-                      strokeWidth: 1,
-                    },
-                  }}
-                />
-              </>
-            )}
-            
-            {/* Carbs Line */}
-            {visibleMacros.carbs && (
-              <>
-                <VictoryLine
-                  data={chartData.carbs}
-                  style={{
-                    data: {
-                      stroke: chartColors.macros.carbs,
-                      strokeWidth: 2,
-                    },
-                  }}
-                  interpolation="monotoneX"
-                  animate={{
-                    duration: 800,
-                    onLoad: { duration: 500 },
-                  }}
-                />
-                <VictoryScatter
-                  data={chartData.carbs}
-                  size={3}
-                  style={{
-                    data: {
-                      fill: chartColors.macros.carbs,
-                      stroke: chartTheme.axis.style.axis.stroke,
-                      strokeWidth: 1,
-                    },
-                  }}
-                />
-              </>
-            )}
-            
-            {/* Fat Line */}
-            {visibleMacros.fat && (
-              <>
-                <VictoryLine
-                  data={chartData.fat}
-                  style={{
-                    data: {
-                      stroke: chartColors.macros.fat,
-                      strokeWidth: 2,
-                    },
-                  }}
-                  interpolation="monotoneX"
-                  animate={{
-                    duration: 800,
-                    onLoad: { duration: 500 },
-                  }}
-                />
-                <VictoryScatter
-                  data={chartData.fat}
-                  size={3}
-                  style={{
-                    data: {
-                      fill: chartColors.macros.fat,
-                      stroke: chartTheme.axis.style.axis.stroke,
-                      strokeWidth: 1,
-                    },
-                  }}
-                />
-              </>
-            )}
-          </VictoryChart>
+          </CartesianChart>
         </View>
       </ScrollView>
       
-      {/* Interactive Legend */}
-      <View style={{
-        flexDirection: 'row',
-        justifyContent: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderTopWidth: 1,
-        borderTopColor: chartTheme.axis.style.axis.stroke,
-      }}>
-        {[
-          { key: 'protein', label: 'Protein', color: chartColors.macros.protein },
-          { key: 'carbs', label: 'Carbs', color: chartColors.macros.carbs },
-          { key: 'fat', label: 'Fat', color: chartColors.macros.fat },
-        ].map((macro) => (
-          <View
-            key={macro.key}
-            style={{
-              alignItems: 'center',
-              marginHorizontal: 12,
-              opacity: visibleMacros[macro.key as keyof typeof visibleMacros] ? 1 : 0.3,
-            }}
-            onTouchEnd={() => toggleMacroVisibility(macro.key as keyof typeof visibleMacros)}
-          >
-            <View style={{
-              width: 12,
-              height: 12,
-              backgroundColor: macro.color,
-              borderRadius: 6,
-              marginBottom: 4,
-            }} />
-            <Text style={{
-              fontSize: 11,
-              color: chartTheme.axis.style.tickLabels.fill,
-              textAlign: 'center',
-            }}>
-              {macro.label}
-            </Text>
-            <Text style={{
-              fontSize: 14,
-              fontWeight: '600',
-              color: chartTheme.axis.style.axisLabel.fill,
-              textAlign: 'center',
-            }}>
-              {averages[macro.key as keyof typeof averages]}g
-            </Text>
-            <Text style={{
-              fontSize: 10,
-              color: chartTheme.axis.style.tickLabels.fill,
-              textAlign: 'center',
-            }}>
-              avg
-            </Text>
-          </View>
-        ))}
+      {/* Legend */}
+      <View style={styles.legendContainer}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: chartColors.macros.protein }]} />
+          <Text style={styles.legendLabel}>Protein</Text>
+          <Text style={styles.legendValue}>{averages.protein}g</Text>
+          <Text style={styles.legendLabel}>avg</Text>
+        </View>
       </View>
     </ChartContainer>
   );

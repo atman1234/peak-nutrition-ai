@@ -1,22 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { View, Dimensions, TouchableOpacity, Text, ScrollView } from 'react-native';
-import {
-  VictoryArea,
-  VictoryLine,
-  VictoryChart,
-  VictoryAxis,
-  VictoryLabel,
-  VictoryScatter,
-  VictoryContainer,
-  VictoryTooltip,
-  VictoryVoronoiContainer,
-} from 'victory-native';
+import { View, Dimensions, TouchableOpacity, Text, StyleSheet, ScrollView } from 'react-native';
+import { CartesianChart, Area, Line, useChartPressState } from 'victory-native';
 import { format, subDays, startOfDay } from 'date-fns';
-import { useChartTheme, useChartColors, chartFormatters } from './common/ChartTheme';
+import { useChartColors, chartFormatters } from './common/ChartTheme';
 import { ChartContainer, ChartPeriodSelector, ChartEmptyState } from './common/ChartContainer';
 import { useFoodLogs } from '@/hooks/useFoodLogs';
-import { useWeightEntries } from '@/hooks/useWeightEntries';
 import { useProfile } from '@/hooks/useProfile';
+import { useTheme } from '@/constants/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -32,44 +22,35 @@ const periodOptions = [
   { label: '90D', value: '90' },
 ];
 
-const goalOptions = [
-  { label: 'Calories', value: 'calories' },
-  { label: 'Weight', value: 'weight' },
-  { label: 'Protein', value: 'protein' },
-];
-
 export const HistoricalGoalChart: React.FC<HistoricalGoalChartProps> = ({
   days = 30,
   goalType = 'calories',
   height = 350,
 }) => {
   const [selectedPeriod, setSelectedPeriod] = useState(days.toString());
-  const [selectedGoal, setSelectedGoal] = useState(goalType);
-  
-  const chartTheme = useChartTheme();
   const chartColors = useChartColors();
+  const { colors } = useTheme();
   const { profile } = useProfile();
-  const { foodLogs, loading: foodLoading, error: foodError } = useFoodLogs();
-  const { weightEntries, loading: weightLoading, error: weightError } = useWeightEntries();
+  const { foodLogs } = useFoodLogs();
 
-  const loading = foodLoading || (selectedGoal === 'weight' && weightLoading);
-  const error = foodError || (selectedGoal === 'weight' && weightError);
+  // Chart press state for interactions
+  const { state, isActive } = useChartPressState({ 
+    x: 0, 
+    y: { achievement: 0 } 
+  });
 
-  // Get goal targets
+  // Get goal target
   const goalTarget = useMemo(() => {
-    switch (selectedGoal) {
+    switch (goalType) {
       case 'calories':
         return profile?.target_calories || 2000;
-      case 'weight':
-        return profile?.target_weight || 0;
       case 'protein':
         const totalCalories = profile?.target_calories || 2000;
-        const proteinPercent = profile?.target_protein_percent || 25;
-        return Math.round((totalCalories * proteinPercent / 100) / 4); // grams
+        return Math.round((totalCalories * 0.25) / 4); // 25% protein target
       default:
-        return 0;
+        return 2000;
     }
-  }, [profile, selectedGoal]);
+  }, [profile, goalType]);
 
   // Prepare chart data
   const chartData = useMemo(() => {
@@ -81,75 +62,105 @@ export const HistoricalGoalChart: React.FC<HistoricalGoalChartProps> = ({
       const date = subDays(today, i);
       const dateStr = format(date, 'yyyy-MM-dd');
       
+      // Filter food logs for this date
+      const dayLogs = foodLogs?.filter(log => {
+        if (!log.created_at) return false;
+        const logDate = format(new Date(log.created_at), 'yyyy-MM-dd');
+        return logDate === dateStr;
+      }) || [];
+
       let actualValue = 0;
-      let achievementPercentage = 0;
-
-      if (selectedGoal === 'calories' || selectedGoal === 'protein') {
-        // Calculate from food logs
-        const dayLogs = foodLogs?.filter(log => {
-          const logDate = format(new Date(log.created_at), 'yyyy-MM-dd');
-          return logDate === dateStr;
-        }) || [];
-
-        if (selectedGoal === 'calories') {
-          actualValue = dayLogs.reduce((sum, log) => {
-            return sum + (log.food_item?.calories || 0) * (log.quantity || 0);
-          }, 0);
-        } else { // protein
-          actualValue = dayLogs.reduce((sum, log) => {
-            return sum + (log.food_item?.protein || 0) * (log.quantity || 0);
-          }, 0);
-        }
-      } else if (selectedGoal === 'weight') {
-        // Get weight entry for this date or closest previous date
-        const sortedEntries = [...(weightEntries || [])].sort((a, b) => 
-          new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-        
-        const entry = sortedEntries.find(e => {
-          const entryDate = new Date(e.date);
-          return entryDate <= date;
-        });
-        
-        if (entry) {
-          actualValue = entry.weight;
-          // For weight, we calculate how close we are to the target
-          if (goalTarget > 0) {
-            const difference = Math.abs(actualValue - goalTarget);
-            const maxDifference = goalTarget * 0.1; // 10% tolerance
-            achievementPercentage = Math.max(0, Math.min(100, (1 - difference / maxDifference) * 100));
-          }
-        }
+      if (goalType === 'calories') {
+        actualValue = dayLogs.reduce((sum, log) => sum + (log.calories_consumed || 0), 0);
+      } else if (goalType === 'protein') {
+        actualValue = dayLogs.reduce((sum, log) => sum + (log.protein_consumed || 0), 0);
       }
 
-      // Calculate achievement percentage for calories and protein
-      if (selectedGoal !== 'weight' && goalTarget > 0) {
-        achievementPercentage = Math.min(100, (actualValue / goalTarget) * 100);
-      }
+      const achievementPercentage = goalTarget > 0 ? Math.min(100, (actualValue / goalTarget) * 100) : 0;
 
       data.push({
-        x: format(date, 'MMM dd'),
-        y: Math.round(actualValue),
+        day: format(date, 'MMM dd'),
         achievement: Math.round(achievementPercentage),
+        actual: actualValue,
         date: date,
         target: goalTarget,
-        label: selectedGoal === 'weight' 
-          ? chartFormatters.weight(actualValue, profile?.preferred_units === 'imperial' ? 'lbs' : 'kg')
-          : selectedGoal === 'calories'
-          ? chartFormatters.calories(actualValue)
-          : chartFormatters.macros(actualValue),
       });
     }
 
     return data;
-  }, [foodLogs, weightEntries, selectedPeriod, selectedGoal, goalTarget, profile]);
+  }, [foodLogs, selectedPeriod, goalType, goalTarget]);
+
+  const isEmpty = chartData.every(d => d.achievement === 0);
+
+  if (isEmpty) {
+    return (
+      <ChartContainer
+        title="Goal Achievement"
+        subtitle={`${goalType.charAt(0).toUpperCase() + goalType.slice(1)} progress tracking`}
+        height={height}
+        actions={
+          <ChartPeriodSelector
+            periods={periodOptions}
+            selectedPeriod={selectedPeriod}
+            onPeriodChange={setSelectedPeriod}
+          />
+        }
+      >
+        <ChartEmptyState message={`No ${goalType} data available for goal tracking`} />
+      </ChartContainer>
+    );
+  }
+
+  const styles = StyleSheet.create({
+    chartWrapper: {
+      paddingHorizontal: 16,
+    },
+    summaryContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    summaryItem: {
+      alignItems: 'center',
+    },
+    summaryLabel: {
+      fontSize: 12,
+      color: colors.textSecondary,
+    },
+    summaryValue: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    tooltipContainer: {
+      position: 'absolute',
+      backgroundColor: colors.card,
+      padding: 8,
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    tooltipText: {
+      fontSize: 12,
+      color: colors.text,
+      fontWeight: '500',
+    },
+  });
 
   // Calculate success metrics
   const successMetrics = useMemo(() => {
-    const validDays = chartData.filter(d => d.y > 0);
+    const validDays = chartData.filter(d => d.achievement > 0);
     if (validDays.length === 0) return { daysOnTarget: 0, averageAchievement: 0, streak: 0 };
 
-    const targetThreshold = selectedGoal === 'weight' ? 90 : 80; // 90% for weight, 80% for calories/protein
+    const targetThreshold = 80; // 80% achievement threshold
     const daysOnTarget = validDays.filter(d => d.achievement >= targetThreshold).length;
     const averageAchievement = validDays.reduce((sum, d) => sum + d.achievement, 0) / validDays.length;
     
@@ -168,320 +179,92 @@ export const HistoricalGoalChart: React.FC<HistoricalGoalChartProps> = ({
       averageAchievement: Math.round(averageAchievement),
       streak,
     };
-  }, [chartData, selectedGoal]);
-
-  // Calculate min/max for Y axis
-  const { minY, maxY } = useMemo(() => {
-    const values = chartData.map(d => d.y).filter(v => v > 0);
-    if (values.length === 0) return { minY: 0, maxY: 100 };
-
-    const allValues = [...values, goalTarget];
-    const min = Math.min(...allValues);
-    const max = Math.max(...allValues);
-    const padding = (max - min) * 0.1 || 10;
-
-    return {
-      minY: Math.max(0, Math.floor(min - padding)),
-      maxY: Math.ceil(max + padding),
-    };
-  }, [chartData, goalTarget]);
-
-  // Get achievement area data (0-100%)
-  const achievementData = chartData.map(d => ({
-    x: d.x,
-    y: d.achievement,
-    y0: 0,
-    date: d.date,
-    label: `${d.achievement}% of goal`,
-  }));
-
-  if (loading) {
-    return (
-      <ChartContainer
-        title="Goal Achievement"
-        subtitle={`${selectedGoal.charAt(0).toUpperCase() + selectedGoal.slice(1)} progress tracking`}
-        loading={true}
-        height={height}
-      />
-    );
-  }
-
-  if (error) {
-    return (
-      <ChartContainer
-        title="Goal Achievement"
-        subtitle={`${selectedGoal.charAt(0).toUpperCase() + selectedGoal.slice(1)} progress tracking`}
-        error="Failed to load goal tracking data"
-        height={height}
-      />
-    );
-  }
-
-  const isEmpty = chartData.every(d => d.y === 0);
-
-  if (isEmpty) {
-    return (
-      <ChartContainer
-        title="Goal Achievement"
-        subtitle={`${selectedGoal.charAt(0).toUpperCase() + selectedGoal.slice(1)} progress tracking`}
-        height={height}
-        actions={
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <ChartPeriodSelector
-              periods={periodOptions}
-              selectedPeriod={selectedPeriod}
-              onPeriodChange={setSelectedPeriod}
-            />
-            <View style={{ flexDirection: 'row', backgroundColor: chartTheme.axis.style.axis.stroke, borderRadius: 8, padding: 2 }}>
-              {goalOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.value}
-                  onPress={() => setSelectedGoal(option.value as 'calories' | 'weight' | 'protein')}
-                  style={{
-                    paddingHorizontal: 8,
-                    paddingVertical: 4,
-                    borderRadius: 6,
-                    backgroundColor: selectedGoal === option.value ? chartColors.success : 'transparent',
-                  }}
-                >
-                  <Text style={{ 
-                    fontSize: 10, 
-                    fontWeight: '500',
-                    color: selectedGoal === option.value ? '#FFFFFF' : chartTheme.axis.style.tickLabels.fill,
-                  }}>
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        }
-      >
-        <ChartEmptyState message={`No ${selectedGoal} data available for goal tracking`} />
-      </ChartContainer>
-    );
-  }
-
-  const chartWidth = Math.max(screenWidth - 32, 350);
+  }, [chartData]);
 
   return (
     <ChartContainer
       title="Goal Achievement"
-      subtitle={`${selectedGoal.charAt(0).toUpperCase() + selectedGoal.slice(1)} progress tracking`}
+      subtitle={`${goalType.charAt(0).toUpperCase() + goalType.slice(1)} progress tracking`}
       height={height}
       noPadding={true}
       actions={
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <ChartPeriodSelector
-            periods={periodOptions}
-            selectedPeriod={selectedPeriod}
-            onPeriodChange={setSelectedPeriod}
-          />
-          <View style={{ flexDirection: 'row', backgroundColor: chartTheme.axis.style.axis.stroke, borderRadius: 8, padding: 2 }}>
-            {goalOptions.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                onPress={() => setSelectedGoal(option.value as 'calories' | 'weight' | 'protein')}
-                style={{
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderRadius: 6,
-                  backgroundColor: selectedGoal === option.value ? chartColors.success : 'transparent',
-                }}
-              >
-                <Text style={{ 
-                  fontSize: 10, 
-                  fontWeight: '500',
-                  color: selectedGoal === option.value ? '#FFFFFF' : chartTheme.axis.style.tickLabels.fill,
-                }}>
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+        <ChartPeriodSelector
+          periods={periodOptions}
+          selectedPeriod={selectedPeriod}
+          onPeriodChange={setSelectedPeriod}
+        />
       }
     >
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={{ paddingHorizontal: 16 }}>
-          {/* Achievement Progress Chart */}
-          <VictoryChart
-            theme={chartTheme}
-            width={chartWidth}
-            height={height - 140}
-            padding={{ left: 70, bottom: 60, right: 40, top: 20 }}
-            domain={{ y: [0, 100] }}
-            containerComponent={
-              <VictoryVoronoiContainer
-                labels={({ datum }) => `${datum.label}\n${chartFormatters.dateFull(datum.date)}`}
-                labelComponent={
-                  <VictoryTooltip
-                    cornerRadius={4}
-                    flyoutStyle={{
-                      stroke: chartTheme.tooltip.flyoutStyle.stroke,
-                      fill: chartTheme.tooltip.flyoutStyle.fill,
-                    }}
-                    style={{
-                      fontSize: 11,
-                      fill: chartTheme.tooltip.style.fill,
-                    }}
-                  />
-                }
-              />
-            }
+        <View style={styles.chartWrapper}>
+          <CartesianChart
+            data={chartData}
+            xKey="day"
+            yKeys={["achievement"]}
+            domainPadding={{ left: 50, right: 50, top: 20, bottom: 50 }}
+            chartPressState={state}
           >
-            {/* X Axis */}
-            <VictoryAxis
-              dependentAxis={false}
-              style={{
-                axis: chartTheme.axis.style.axis,
-                tickLabels: {
-                  ...chartTheme.axis.style.tickLabels,
-                  angle: chartData.length > 14 ? -45 : 0,
-                  textAnchor: chartData.length > 14 ? 'end' : 'middle',
-                },
-                grid: { stroke: 'transparent' },
-              }}
-              fixLabelOverlap={true}
-            />
-            
-            {/* Y Axis */}
-            <VictoryAxis
-              dependentAxis
-              style={{
-                axis: chartTheme.axis.style.axis,
-                tickLabels: chartTheme.axis.style.tickLabels,
-                grid: chartTheme.axis.style.grid,
-              }}
-              tickFormat={(t) => `${t}%`}
-              label="Goal Achievement (%)"
-              axisLabelComponent={
-                <VictoryLabel
-                  dy={-30}
-                  style={chartTheme.axis.style.axisLabel}
+            {({ points, chartBounds }) => (
+              <>
+                {/* Target line at 100% */}
+                <Line
+                  points={[
+                    { x: chartBounds.left, y: chartBounds.top },
+                    { x: chartBounds.right, y: chartBounds.top },
+                  ]}
+                  color={chartColors.success}
+                  strokeWidth={2}
+                  pathEffect={{ stroke: { dashArray: [5, 5] } }}
                 />
-              }
-            />
-            
-            {/* Target line at 100% */}
-            <VictoryLine
-              data={[
-                { x: achievementData[0]?.x, y: 100 },
-                { x: achievementData[achievementData.length - 1]?.x, y: 100 },
-              ]}
-              style={{
-                data: {
-                  stroke: chartColors.success,
-                  strokeWidth: 2,
-                  strokeDasharray: '5,5',
-                },
-              }}
-            />
-            
-            {/* Achievement threshold line */}
-            <VictoryLine
-              data={[
-                { x: achievementData[0]?.x, y: selectedGoal === 'weight' ? 90 : 80 },
-                { x: achievementData[achievementData.length - 1]?.x, y: selectedGoal === 'weight' ? 90 : 80 },
-              ]}
-              style={{
-                data: {
-                  stroke: chartColors.warning,
-                  strokeWidth: 1,
-                  strokeDasharray: '3,3',
-                  opacity: 0.7,
-                },
-              }}
-            />
-            
-            {/* Achievement area */}
-            <VictoryArea
-              data={achievementData}
-              style={{
-                data: {
-                  fill: chartColors.success,
-                  fillOpacity: 0.3,
-                  stroke: chartColors.success,
-                  strokeWidth: 2,
-                },
-              }}
-              interpolation="monotoneX"
-              animate={{
-                duration: 800,
-                onLoad: { duration: 500 },
-              }}
-            />
-            
-            {/* Achievement points */}
-            <VictoryScatter
-              data={achievementData}
-              size={({ datum }) => datum.y >= (selectedGoal === 'weight' ? 90 : 80) ? 5 : 3}
-              style={{
-                data: {
-                  fill: ({ datum }) => datum.y >= (selectedGoal === 'weight' ? 90 : 80) 
-                    ? chartColors.success 
-                    : chartColors.warning,
-                  stroke: chartTheme.axis.style.axis.stroke,
-                  strokeWidth: 1,
-                },
-              }}
-            />
-          </VictoryChart>
+                
+                {/* Achievement area */}
+                <Area
+                  points={points.achievement}
+                  chartBounds={chartBounds}
+                  color={chartColors.success}
+                  opacity={0.3}
+                />
+
+                {/* Tooltip */}
+                {isActive && (
+                  <View
+                    style={[
+                      styles.tooltipContainer,
+                      {
+                        left: state.x.position - 40,
+                        top: state.y.achievement.position - 40,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.tooltipText}>
+                      {state.y.achievement.value}% of goal
+                    </Text>
+                  </View>
+                )}
+              </>
+            )}
+          </CartesianChart>
         </View>
       </ScrollView>
       
       {/* Success Metrics */}
-      <View style={{
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderTopWidth: 1,
-        borderTopColor: chartTheme.axis.style.axis.stroke,
-      }}>
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: chartTheme.axis.style.tickLabels.fill }}>
-            Days on Target
-          </Text>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: chartColors.success }}>
+      <View style={styles.summaryContainer}>
+        <View style={styles.summaryItem}>
+          <Text style={styles.summaryLabel}>Days on Target</Text>
+          <Text style={[styles.summaryValue, { color: chartColors.success }]}>
             {successMetrics.daysOnTarget}
           </Text>
-          <Text style={{ fontSize: 10, color: chartTheme.axis.style.tickLabels.fill }}>
-            out of {chartData.filter(d => d.y > 0).length}
-          </Text>
         </View>
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: chartTheme.axis.style.tickLabels.fill }}>
-            Average
-          </Text>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: chartTheme.axis.style.axisLabel.fill }}>
+        <View style={styles.summaryItem}>
+          <Text style={styles.summaryLabel}>Average</Text>
+          <Text style={styles.summaryValue}>
             {successMetrics.averageAchievement}%
           </Text>
-          <Text style={{ fontSize: 10, color: chartTheme.axis.style.tickLabels.fill }}>
-            achievement
-          </Text>
         </View>
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: chartTheme.axis.style.tickLabels.fill }}>
-            Current Streak
-          </Text>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: chartColors.primary }}>
+        <View style={styles.summaryItem}>
+          <Text style={styles.summaryLabel}>Current Streak</Text>
+          <Text style={[styles.summaryValue, { color: chartColors.primary }]}>
             {successMetrics.streak}
-          </Text>
-          <Text style={{ fontSize: 10, color: chartTheme.axis.style.tickLabels.fill }}>
-            days
-          </Text>
-        </View>
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: chartTheme.axis.style.tickLabels.fill }}>
-            Target
-          </Text>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: chartTheme.axis.style.axisLabel.fill }}>
-            {selectedGoal === 'weight' 
-              ? chartFormatters.weight(goalTarget, profile?.preferred_units === 'imperial' ? 'lbs' : 'kg')
-              : selectedGoal === 'calories'
-              ? chartFormatters.calories(goalTarget)
-              : chartFormatters.macros(goalTarget)}
           </Text>
         </View>
       </View>
