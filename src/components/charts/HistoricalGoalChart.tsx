@@ -1,14 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { View, Dimensions, TouchableOpacity, Text, StyleSheet, ScrollView } from 'react-native';
-import { CartesianChart, Area, Line, useChartPressState } from 'victory-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { CartesianChart, Area } from 'victory-native';
 import { format, subDays, startOfDay } from 'date-fns';
-import { useChartColors, chartFormatters } from './common/ChartTheme';
+import { useChartColors } from './common/ChartTheme';
 import { ChartContainer, ChartPeriodSelector, ChartEmptyState } from './common/ChartContainer';
-import { useFoodLogs } from '@/hooks/useFoodLogs';
+import { useHistoricalAnalytics } from '@/hooks/useHistoricalAnalytics';
 import { useProfile } from '@/hooks/useProfile';
 import { useTheme } from '@/constants/theme';
-
-const { width: screenWidth } = Dimensions.get('window');
 
 interface HistoricalGoalChartProps {
   days?: number;
@@ -31,21 +29,28 @@ export const HistoricalGoalChart: React.FC<HistoricalGoalChartProps> = ({
   const chartColors = useChartColors();
   const { colors } = useTheme();
   const { profile } = useProfile();
-  const { foodLogs } = useFoodLogs();
-
-  // Chart press state for interactions
-  const { state, isActive } = useChartPressState({ 
-    x: 0, 
-    y: { achievement: 0 } 
+  
+  // Use historical analytics for the selected period
+  const periodDays = parseInt(selectedPeriod);
+  const timePeriod = periodDays <= 7 ? '7d' : periodDays <= 30 ? '30d' : '90d';
+  const { foodLogs, isLoading } = useHistoricalAnalytics({
+    timePeriod,
+    includeStreaks: true,
+    includeConsistency: true,
+    includeTrends: false,
+    includeComparisons: false,
+    goalTypes: [goalType as 'calories' | 'protein'],
   });
+
+  // Simplified chart without press interactions for now
 
   // Get goal target
   const goalTarget = useMemo(() => {
     switch (goalType) {
       case 'calories':
-        return profile?.target_calories || 2000;
+        return (profile as any)?.daily_calories || (profile as any)?.target_calories || 2000;
       case 'protein':
-        const totalCalories = profile?.target_calories || 2000;
+        const totalCalories = (profile as any)?.daily_calories || (profile as any)?.target_calories || 2000;
         return Math.round((totalCalories * 0.25) / 4); // 25% protein target
       default:
         return 2000;
@@ -54,20 +59,23 @@ export const HistoricalGoalChart: React.FC<HistoricalGoalChartProps> = ({
 
   // Prepare chart data
   const chartData = useMemo(() => {
-    const periodDays = parseInt(selectedPeriod);
+    if (isLoading || !foodLogs) return [];
+
+    const currentPeriodDays = parseInt(selectedPeriod);
     const today = startOfDay(new Date());
     const data = [];
 
-    for (let i = periodDays - 1; i >= 0; i--) {
+    for (let i = currentPeriodDays - 1; i >= 0; i--) {
       const date = subDays(today, i);
       const dateStr = format(date, 'yyyy-MM-dd');
       
-      // Filter food logs for this date
-      const dayLogs = foodLogs?.filter(log => {
-        if (!log.created_at) return false;
-        const logDate = format(new Date(log.created_at), 'yyyy-MM-dd');
+      // Filter food logs for this date from historical analytics data
+      const dayLogs = foodLogs.filter(log => {
+        const timestamp = log.logged_at || log.created_at;
+        if (!timestamp) return false;
+        const logDate = format(new Date(timestamp), 'yyyy-MM-dd');
         return logDate === dateStr;
-      }) || [];
+      });
 
       let actualValue = 0;
       if (goalType === 'calories') {
@@ -88,7 +96,7 @@ export const HistoricalGoalChart: React.FC<HistoricalGoalChartProps> = ({
     }
 
     return data;
-  }, [foodLogs, selectedPeriod, goalType, goalTarget]);
+  }, [foodLogs, selectedPeriod, goalType, goalTarget, isLoading]);
 
   const isEmpty = chartData.every(d => d.achievement === 0);
 
@@ -202,45 +210,16 @@ export const HistoricalGoalChart: React.FC<HistoricalGoalChartProps> = ({
             xKey="day"
             yKeys={["achievement"]}
             domainPadding={{ left: 50, right: 50, top: 20, bottom: 50 }}
-            chartPressState={state}
           >
-            {({ points, chartBounds }) => (
+            {({ points }) => (
               <>
-                {/* Target line at 100% */}
-                <Line
-                  points={[
-                    { x: chartBounds.left, y: chartBounds.top },
-                    { x: chartBounds.right, y: chartBounds.top },
-                  ]}
-                  color={chartColors.success}
-                  strokeWidth={2}
-                  pathEffect={{ stroke: { dashArray: [5, 5] } }}
-                />
-                
                 {/* Achievement area */}
                 <Area
                   points={points.achievement}
-                  chartBounds={chartBounds}
-                  color={chartColors.success}
+                  y0={0}
+                  color={colors.success || chartColors.macros.protein}
                   opacity={0.3}
                 />
-
-                {/* Tooltip */}
-                {isActive && (
-                  <View
-                    style={[
-                      styles.tooltipContainer,
-                      {
-                        left: state.x.position - 40,
-                        top: state.y.achievement.position - 40,
-                      },
-                    ]}
-                  >
-                    <Text style={styles.tooltipText}>
-                      {state.y.achievement.value}% of goal
-                    </Text>
-                  </View>
-                )}
               </>
             )}
           </CartesianChart>
@@ -251,7 +230,7 @@ export const HistoricalGoalChart: React.FC<HistoricalGoalChartProps> = ({
       <View style={styles.summaryContainer}>
         <View style={styles.summaryItem}>
           <Text style={styles.summaryLabel}>Days on Target</Text>
-          <Text style={[styles.summaryValue, { color: chartColors.success }]}>
+          <Text style={[styles.summaryValue, { color: colors.success || chartColors.macros.protein }]}>
             {successMetrics.daysOnTarget}
           </Text>
         </View>
@@ -263,7 +242,7 @@ export const HistoricalGoalChart: React.FC<HistoricalGoalChartProps> = ({
         </View>
         <View style={styles.summaryItem}>
           <Text style={styles.summaryLabel}>Current Streak</Text>
-          <Text style={[styles.summaryValue, { color: chartColors.primary }]}>
+          <Text style={[styles.summaryValue, { color: colors.primary || chartColors.calories.target }]}>
             {successMetrics.streak}
           </Text>
         </View>

@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Ionicons } from '@expo/vector-icons';
 import { UnifiedFoodResult } from '../../hooks/useUnifiedFoodSearch';
 import { useFoodLogs } from '../../hooks/useFoodLogs';
@@ -23,17 +22,7 @@ import { FoodAutocomplete } from './FoodAutocomplete';
 import { PortionPicker } from './PortionPicker';
 import { MealTypePicker } from './MealTypePicker';
 import { FoodNutritionPreview } from './FoodNutritionPreview';
-
-const foodLogSchema = z.object({
-  searchTerm: z.string().min(1, 'Please search for a food'),
-  portion: z.number().min(1, 'Portion must be at least 1 gram'),
-  mealType: z.enum(['breakfast', 'lunch', 'dinner', 'snack']).refine(val => val !== undefined, {
-    message: 'Please select a meal type',
-  }),
-  addToFavorites: z.boolean().optional(),
-});
-
-type FoodLogFormData = z.infer<typeof foodLogSchema>;
+import { foodLogSchema, FoodLogFormData, getValidationContext } from '../../lib/validation/schemas';
 
 interface QuickFoodAddProps {
   onSuccess?: () => void;
@@ -55,6 +44,9 @@ export function QuickFoodAdd({
   const { addFavorite, isFavorite, canAddMoreFavorites } = useFavorites();
   const { getPortionSuggestion } = usePortionHistory();
 
+  // Get validation context for smart defaults
+  const validationContext = getValidationContext();
+  
   const {
     control,
     handleSubmit,
@@ -67,7 +59,7 @@ export function QuickFoodAdd({
     defaultValues: {
       searchTerm: '',
       portion: 100,
-      mealType: defaultMealType || getCurrentMealType(),
+      mealType: defaultMealType || validationContext.suggestedMealType,
       addToFavorites: false,
     },
   });

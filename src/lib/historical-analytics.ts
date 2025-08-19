@@ -7,11 +7,9 @@ import {
   StreakData, 
   ConsistencyScore, 
   TrendAnalysis, 
-  ComparativeData,
   DateRange,
   TimePeriod,
   GoalType,
-  MacroType,
   GoalAchievementChartData,
   MacroTrendsChartData,
   HeatmapData
@@ -353,10 +351,10 @@ export function analyzePatterns(dailyAchievements: DailyGoalAchievement[]): {
     }
     
     const bestGoal = Object.entries(goalScores).reduce((best, [goal, score]) => 
-      score > goalScores[best] ? goal : best, 'calories'
+      score > goalScores[best as keyof typeof goalScores] ? goal : best, 'calories'
     )
     const worstGoal = Object.entries(goalScores).reduce((worst, [goal, score]) => 
-      score < goalScores[worst] ? goal : worst, 'calories'
+      score < goalScores[worst as keyof typeof goalScores] ? goal : worst, 'calories'
     )
     
     weekdayPatterns[day] = { averageScore: avgScore, bestGoal, worstGoal }
@@ -412,7 +410,7 @@ export function analyzePatterns(dailyAchievements: DailyGoalAchievement[]): {
     successFactors.push(`${bestWeekday[0]}s are your strongest days`)
   }
 
-  const consistentGoal = Object.entries(weekdayData).reduce((consistent, [day, achievements]) => {
+  const consistentGoal = Object.entries(weekdayData).reduce((consistent, [_, achievements]) => {
     if (achievements.length === 0) return consistent
     const goalScores = {
       calories: achievements.reduce((sum, a) => sum + (a.calories.achieved ? 1 : 0), 0) / achievements.length,
@@ -524,8 +522,14 @@ export function generateInsights(
 
   // Goal-specific insights
   const goalPerformance = ['calories', 'protein', 'carbs', 'fat'].map(goal => {
-    const achieved = dailyAchievements.filter(d => d[goal as keyof DailyGoalAchievement].achieved).length
-    const total = dailyAchievements.filter(d => (d[goal as keyof DailyGoalAchievement] as any).target > 0).length
+    const achieved = dailyAchievements.filter(d => {
+      const goalData = d[goal as keyof DailyGoalAchievement];
+      return typeof goalData === 'object' && goalData !== null && 'achieved' in goalData ? goalData.achieved : false;
+    }).length
+    const total = dailyAchievements.filter(d => {
+      const goalData = d[goal as keyof DailyGoalAchievement];
+      return typeof goalData === 'object' && goalData !== null && 'target' in goalData ? goalData.target > 0 : false;
+    }).length
     const rate = total > 0 ? (achieved / total) * 100 : 0
     return { goal, rate, achieved, total }
   })
@@ -562,11 +566,12 @@ export function calculateTrendAnalysis(
 
   if (sortedAchievements.length < 7) {
     return {
-      goalType,
+      metric: goalType,
       direction: 'stable',
-      strength: 0,
-      confidence: 0,
-      predictions: []
+      strength: 'weak',
+      changePercentage: 0,
+      movingAverage: [],
+      confidence: 0
     }
   }
 
@@ -603,10 +608,12 @@ export function calculateTrendAnalysis(
   const rSquared = ssTot > 0 ? 1 - (ssRes / ssTot) : 0
 
   // Determine direction and strength
-  const direction: 'improving' | 'declining' | 'stable' = 
-    slope > 0.5 ? 'improving' : slope < -0.5 ? 'declining' : 'stable'
+  const direction: 'up' | 'down' | 'stable' = 
+    slope > 0.5 ? 'up' : slope < -0.5 ? 'down' : 'stable'
   
-  const strength = Math.abs(slope)
+  const strengthValue = Math.abs(slope)
+  const strength: 'weak' | 'moderate' | 'strong' = 
+    strengthValue < 0.5 ? 'weak' : strengthValue < 1.5 ? 'moderate' : 'strong'
   const confidence = Math.max(0, Math.min(100, rSquared * 100))
 
   // Generate predictions for next 7 days
@@ -628,10 +635,11 @@ export function calculateTrendAnalysis(
   }
 
   return {
-    goalType,
+    metric: goalType,
     direction,
     strength,
-    confidence,
-    predictions
+    changePercentage: strengthValue * 100,
+    movingAverage: movingAverages,
+    confidence
   }
 }

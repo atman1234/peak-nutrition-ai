@@ -50,16 +50,24 @@ export const WeightChart: React.FC<WeightChartProps> = ({
   const chartData = useMemo(() => {
     const periodDays = parseInt(selectedPeriod);
     const today = startOfDay(new Date());
-    const data = [];
+    const data: Array<{
+      day: string;
+      weight: number;
+      date: Date;
+      goal: number;
+    }> = [];
 
-    // Sort weight entries by date
-    const sortedEntries = [...(weightEntries || [])].sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    // Sort weight entries by recorded_at date
+    const sortedEntries = [...(weightEntries || [])].sort((a, b) => {
+      const dateA = a.recorded_at ? new Date(a.recorded_at).getTime() : 0;
+      const dateB = b.recorded_at ? new Date(b.recorded_at).getTime() : 0;
+      return dateA - dateB;
+    });
 
     // Get entries within the period
     const filteredEntries = sortedEntries.filter(entry => {
-      const entryDate = new Date(entry.date);
+      if (!entry.recorded_at) return false;
+      const entryDate = new Date(entry.recorded_at);
       const cutoffDate = subDays(today, periodDays);
       return entryDate >= cutoffDate && entryDate <= today;
     });
@@ -70,12 +78,14 @@ export const WeightChart: React.FC<WeightChartProps> = ({
         ? entry.weight * 0.453592 // Convert lbs to kg if needed
         : entry.weight;
 
-      data.push({
-        day: format(new Date(entry.date), 'MMM dd'),
-        weight: parseFloat(weight.toFixed(1)),
-        date: new Date(entry.date),
-        goal: weightGoal,
-      });
+      if (entry.recorded_at) {
+        data.push({
+          day: format(new Date(entry.recorded_at), 'MMM dd'),
+          weight: parseFloat(weight.toFixed(1)),
+          date: new Date(entry.recorded_at),
+          goal: weightGoal,
+        });
+      }
     });
 
     return data;
@@ -246,7 +256,7 @@ export const WeightChart: React.FC<WeightChartProps> = ({
             data={chartData}
             xKey="day"
             yKeys={["weight"]}
-            domainPadding={{ left: 50, right: 50, top: 20, bottom: 50 }}
+            domainPadding={{ left: 80, right: 80, top: 40, bottom: 60 }}
             chartPressState={state}
           >
             {({ points, chartBounds }) => (

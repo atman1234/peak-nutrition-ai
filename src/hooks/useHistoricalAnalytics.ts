@@ -22,7 +22,6 @@ import type {
   HistoricalMetrics,
   HistoricalAnalyticsConfig,
   TimePeriod,
-  DateRange,
   DailyGoalAchievement
 } from '../types/historical-analytics'
 import type { Database } from '../types/supabase'
@@ -52,7 +51,7 @@ export function useHistoricalAnalytics(config: HistoricalAnalyticsConfig) {
       if (!user?.id) return []
 
       // Convert local date range to UTC timestamp range for querying
-      const { start: startUTC, end: endUTC } = getLocalDateRangeForQuery(dateRange.start)
+      const { start: startUTC } = getLocalDateRangeForQuery(dateRange.start)
       const { start: endRangeUTC } = getLocalDateRangeForQuery(dateRange.end)
 
       const { data, error } = await supabase
@@ -83,9 +82,10 @@ export function useHistoricalAnalytics(config: HistoricalAnalyticsConfig) {
       dates.push(d.toISOString().split('T')[0])
     }
 
-    // Calculate daily goal achievements
+    // Filter out food logs with null logged_at dates and calculate daily goal achievements
+    const validFoodLogs = foodLogs.filter(log => log.logged_at !== null) as Array<Omit<FoodLog, 'logged_at'> & { logged_at: string }>
     const dailyGoals: DailyGoalAchievement[] = dates.map(date =>
-      calculateDailyGoalAchievement(date, foodLogs, profile)
+      calculateDailyGoalAchievement(date, validFoodLogs, profile)
     )
 
     // Calculate streaks for each goal type
@@ -163,6 +163,7 @@ export function useHistoricalAnalytics(config: HistoricalAnalyticsConfig) {
     historicalMetrics,
     chartData,
     summary,
+    foodLogs, // Add raw food logs for chart components
     isLoading,
     error,
     dateRange

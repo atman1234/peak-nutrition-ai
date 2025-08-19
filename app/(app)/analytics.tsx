@@ -9,6 +9,7 @@ import { MacroChart } from '@/components/charts/MacroChart';
 import { MacroTrendsChart } from '@/components/charts/MacroTrendsChart';
 import { ComparativeChart } from '@/components/charts/ComparativeChart';
 import { HistoricalGoalChart } from '@/components/charts/HistoricalGoalChart';
+import { AIReviewTab } from '@/components/analytics/AIReviewTab';
 
 export default function AnalyticsScreen() {
   const { colors } = useTheme();
@@ -81,6 +82,7 @@ export default function AnalyticsScreen() {
     { id: 'trends', label: 'Trends' },
     { id: 'goals', label: 'Goals' },
     { id: 'compare', label: 'Compare' },
+    { id: 'ai-review', label: 'AI Review' },
   ];
 
   const renderOverviewTab = () => (
@@ -153,6 +155,10 @@ export default function AnalyticsScreen() {
     </>
   );
 
+  const renderAIReviewTab = () => (
+    <AIReviewTab timePeriod="30d" />
+  );
+
   const renderTabContent = () => {
     switch (selectedTab) {
       case 'overview':
@@ -163,6 +169,8 @@ export default function AnalyticsScreen() {
         return renderGoalsTab();
       case 'compare':
         return renderCompareTab();
+      case 'ai-review':
+        return renderAIReviewTab();
       default:
         return renderOverviewTab();
     }

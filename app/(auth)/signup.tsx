@@ -9,44 +9,37 @@ import {
   Alert,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthContext } from '../../src/components/auth/AuthContext';
 import { Button, Input, LoadingSpinner } from '../../src/components/ui';
 import { Colors, TextStyles, Spacing } from '../../src/constants';
+import { signupSchema, SignupFormData } from '../../src/lib/validation/schemas';
 
 export default function SignupScreen() {
   const router = useRouter();
   const { signUp } = useAuthContext();
-  
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const validateForm = () => {
-    if (!email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return false;
-    }
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid },
+    setError,
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+    mode: 'onChange', // Enable real-time validation
+    defaultValues: {
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
 
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return false;
-    }
-
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters long');
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleSignup = async () => {
-    if (!validateForm()) return;
-
+  const onSubmit = async (data: SignupFormData) => {
     setLoading(true);
     try {
-      const { error } = await signUp(email, password);
+      const { error } = await signUp(data.email, data.password);
       
       if (error) {
         Alert.alert('Signup Failed', error.message);
@@ -91,41 +84,66 @@ export default function SignupScreen() {
         </View>
 
         <View style={styles.form}>
-          <Input
-            label="Email"
-            placeholder="Enter your email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            leftIcon="mail"
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Email"
+                placeholder="Enter your email"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                leftIcon="mail"
+                error={errors.email?.message}
+              />
+            )}
           />
 
-          <Input
-            label="Password"
-            placeholder="Create a password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            showPasswordToggle
-            leftIcon="lock-closed"
-            helperText="Must be at least 6 characters"
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Password"
+                placeholder="Create a password"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                secureTextEntry
+                showPasswordToggle
+                leftIcon="lock-closed"
+                error={errors.password?.message}
+                helperText={!errors.password ? "Must contain uppercase, lowercase, and number" : undefined}
+              />
+            )}
           />
 
-          <Input
-            label="Confirm Password"
-            placeholder="Confirm your password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-            showPasswordToggle
-            leftIcon="lock-closed"
+          <Controller
+            control={control}
+            name="confirmPassword"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Confirm Password"
+                placeholder="Confirm your password"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                secureTextEntry
+                showPasswordToggle
+                leftIcon="lock-closed"
+                error={errors.confirmPassword?.message}
+              />
+            )}
           />
 
           <Button
             title="Create Account"
-            onPress={handleSignup}
+            onPress={handleSubmit(onSubmit)}
+            disabled={!isValid || loading}
             loading={loading}
             style={styles.signupButton}
           />

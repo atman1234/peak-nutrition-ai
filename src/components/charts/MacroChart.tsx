@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { View, Dimensions, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { Pie } from 'victory-native';
+import { PolarChart, Pie } from 'victory-native';
 import { format, startOfDay } from 'date-fns';
 import { useChartColors, chartFormatters } from './common/ChartTheme';
 import { ChartContainer, ChartLegend, ChartEmptyState } from './common/ChartContainer';
-import { useFoodLogs } from '@/hooks/useFoodLogs';
+import { useHistoricalAnalytics } from '@/hooks/useHistoricalAnalytics';
 import { useProfile } from '@/hooks/useProfile';
 import { useTheme } from '@/constants/theme';
 
@@ -24,21 +24,31 @@ export const MacroChart: React.FC<MacroChartProps> = ({
   const chartColors = useChartColors();
   const { colors } = useTheme();
   const { profile } = useProfile();
-  const { foodLogs } = useFoodLogs();
+  
+  // Get the date for historical analytics
+  const dateString = format(date, 'yyyy-MM-dd');
+  
+  // Use historical analytics for the selected date
+  const { foodLogs, isLoading } = useHistoricalAnalytics({
+    timePeriod: 'custom',
+    customDateRange: { start: dateString, end: dateString },
+    includeStreaks: false,
+    includeConsistency: false,
+    includeTrends: false,
+    includeComparisons: false,
+    goalTypes: ['calories', 'protein', 'carbs', 'fat'],
+  });
 
   // Calculate macro data for the selected date
   const macroData = useMemo(() => {
-    const today = format(startOfDay(date), 'yyyy-MM-dd');
-    
-    // Filter food logs for the selected date
-    const dayLogs = foodLogs?.filter(log => {
-      if (!log.created_at) return false;
-      const logDate = format(new Date(log.created_at), 'yyyy-MM-dd');
-      return logDate === today;
-    }) || [];
+    if (isLoading || !foodLogs) {
+      return {
+        actual: { protein: 0, carbs: 0, fat: 0, calories: 0 },
+      };
+    }
 
-    // Calculate total macros for the day
-    const totals = dayLogs.reduce((acc, log) => {
+    // Calculate total macros for the day from historical analytics data
+    const totals = foodLogs.reduce((acc, log) => {
       acc.protein += log.protein_consumed || 0;
       acc.carbs += log.carbs_consumed || 0;
       acc.fat += log.fat_consumed || 0;
@@ -54,7 +64,7 @@ export const MacroChart: React.FC<MacroChartProps> = ({
         calories: Math.round(totals.calories),
       },
     };
-  }, [foodLogs, date]);
+  }, [foodLogs, isLoading]);
 
   // Prepare pie chart data
   const pieData = useMemo(() => {
@@ -134,14 +144,14 @@ export const MacroChart: React.FC<MacroChartProps> = ({
       noPadding={false}
     >
       <View style={styles.chartWrapper}>
-        <Pie
+        <PolarChart
           data={pieData}
-          radius={({ chartBounds }) => Math.min(chartBounds.width, chartBounds.height) / 2 - 20}
-          innerRadius={60}
           colorKey="color"
           labelKey="label"
           valueKey="value"
-        />
+        >
+          <Pie.Chart innerRadius={60} />
+        </PolarChart>
         
         {/* Center label */}
         <View style={[styles.centerLabel, { top: height / 2 - 20 }]}>

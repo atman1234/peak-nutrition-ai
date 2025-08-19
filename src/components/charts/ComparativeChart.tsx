@@ -1,12 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import { View, Dimensions, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { CartesianChart, Bar, useChartPressState } from 'victory-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { CartesianChart, Bar } from 'victory-native';
 import { useChartColors, chartFormatters } from './common/ChartTheme';
 import { ChartContainer, ChartEmptyState } from './common/ChartContainer';
-import { useFoodLogs } from '@/hooks/useFoodLogs';
+import { useHistoricalAnalytics } from '@/hooks/useHistoricalAnalytics';
 import { useTheme } from '@/constants/theme';
 
-const { width: screenWidth } = Dimensions.get('window');
 
 interface ComparativeChartProps {
   comparisonType?: 'week' | 'month';
@@ -21,42 +20,111 @@ export const ComparativeChart: React.FC<ComparativeChartProps> = ({
 }) => {
   const chartColors = useChartColors();
   const { colors } = useTheme();
-  const { foodLogs } = useFoodLogs();
-
-  // Chart press state for interactions
-  const { state, isActive } = useChartPressState({ 
-    x: 0, 
-    y: { value: 0 } 
+  
+  // Use historical analytics for current and previous periods
+  const currentTimePeriod = comparisonType === 'week' ? '7d' : '30d';
+  const { foodLogs: currentPeriodLogs, isLoading: currentLoading } = useHistoricalAnalytics({
+    timePeriod: currentTimePeriod,
+    includeStreaks: false,
+    includeConsistency: false,
+    includeTrends: false,
+    includeComparisons: false,
+    goalTypes: ['calories', 'protein', 'carbs', 'fat'],
+  });
+  
+  // For previous period, we'll use a simplified approach with same period length
+  const { foodLogs: previousPeriodLogs, isLoading: previousLoading } = useHistoricalAnalytics({
+    timePeriod: comparisonType === 'week' ? '30d' : '90d', // Get longer period to extract previous data
+    includeStreaks: false,
+    includeConsistency: false,
+    includeTrends: false,
+    includeComparisons: false,
+    goalTypes: ['calories', 'protein', 'carbs', 'fat'],
   });
 
-  // Simplified comparison data - comparing current vs previous period
+  // Simplified chart without press interactions for now
+
+  // Calculate comparison data between current and previous periods
   const chartData = useMemo(() => {
-    // Calculate simple averages for demonstration
-    const totalCalories = foodLogs?.reduce((sum, log) => sum + (log.calories_consumed || 0), 0) || 0;
-    const avgCalories = foodLogs?.length ? totalCalories / foodLogs.length : 0;
+    if (currentLoading || previousLoading || !currentPeriodLogs || !previousPeriodLogs) {
+      return [];
+    }
+
+    // Calculate metric value for a set of logs
+    const calculateMetricTotal = (logs: typeof currentPeriodLogs) => {
+      switch (metricType) {
+        case 'calories':
+          return logs.reduce((sum, log) => sum + (log.calories_consumed || 0), 0);
+        case 'macros':
+          return logs.reduce((sum, log) => 
+            sum + (log.protein_consumed || 0) + (log.carbs_consumed || 0) + (log.fat_consumed || 0), 0);
+        case 'weight':
+          // For weight, we'd need weight entries, not food logs
+          // For now, default to calories
+          return logs.reduce((sum, log) => sum + (log.calories_consumed || 0), 0);
+        default:
+          return logs.reduce((sum, log) => sum + (log.calories_consumed || 0), 0);
+      }
+    };
+
+    // Calculate current period average
+    const currentTotal = calculateMetricTotal(currentPeriodLogs);
+    const currentAvg = currentPeriodLogs.length ? currentTotal / currentPeriodLogs.length : 0;
+
+    // Calculate previous period average - use a better strategy
+    const periodDays = comparisonType === 'week' ? 7 : 30;
     
+    // Sort all logs by date and take the appropriate slice for previous period
+    const sortedPreviousLogs = [...previousPeriodLogs].sort((a, b) => {
+      const dateA = a.logged_at ? new Date(a.logged_at).getTime() : 0;
+      const dateB = b.logged_at ? new Date(b.logged_at).getTime() : 0;
+      return dateA - dateB;
+    });
+
+    // Take logs from the period before the current one
+    const totalLogs = sortedPreviousLogs.length;
+    const previousLogs = sortedPreviousLogs.slice(
+      Math.max(0, totalLogs - (periodDays * 2)), 
+      totalLogs - periodDays
+    );
+
+    const previousTotal = calculateMetricTotal(previousLogs);
+    const previousAvg = previousLogs.length ? previousTotal / previousLogs.length : 0;
+
+    // Only return data if we have meaningful data for both periods
+    if (currentPeriodLogs.length === 0 && previousLogs.length === 0) {
+      return [];
+    }
+
     return [
       {
-        period: 'Previous',
-        value: Math.round(avgCalories * 0.8), // Simulate previous period
+        period: `Previous ${comparisonType}`,
+        value: Math.round(previousAvg),
       },
       {
-        period: 'Current',
-        value: Math.round(avgCalories),
+        period: `Current ${comparisonType}`,
+        value: Math.round(currentAvg),
       },
     ];
-  }, [foodLogs]);
+  }, [currentPeriodLogs, previousPeriodLogs, currentLoading, previousLoading, comparisonType, metricType]);
 
-  const isEmpty = chartData.every(d => d.value === 0);
+  const isEmpty = chartData.length === 0 || chartData.every(d => d.value === 0);
+  
+  const getTitle = () => {
+    const periodLabel = comparisonType === 'week' ? 'Weekly' : 'Monthly';
+    const metricLabel = metricType === 'calories' ? 'Calories' : 
+                       metricType === 'macros' ? 'Macros' : 'Weight';
+    return `${periodLabel} ${metricLabel} Comparison`;
+  };
 
   if (isEmpty) {
     return (
       <ChartContainer
-        title="Period Comparison"
+        title={getTitle()}
         subtitle="Current vs Previous Period"
         height={height}
       >
-        <ChartEmptyState message="No data available for comparison" />
+        <ChartEmptyState message="Not enough data for period comparison" />
       </ChartContainer>
     );
   }
@@ -80,24 +148,6 @@ export const ComparativeChart: React.FC<ComparativeChartProps> = ({
       fontWeight: '600',
       color: chartData[1]?.value > chartData[0]?.value ? chartColors.calories.medium : chartColors.calories.high,
     },
-    tooltipContainer: {
-      position: 'absolute',
-      backgroundColor: colors.card,
-      padding: 8,
-      borderRadius: 6,
-      borderWidth: 1,
-      borderColor: colors.border,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 4,
-      elevation: 5,
-    },
-    tooltipText: {
-      fontSize: 12,
-      color: colors.text,
-      fontWeight: '500',
-    },
   });
 
   const percentageChange = chartData[0]?.value > 0 
@@ -106,7 +156,7 @@ export const ComparativeChart: React.FC<ComparativeChartProps> = ({
 
   return (
     <ChartContainer
-      title="Period Comparison"
+      title={getTitle()}
       subtitle="Current vs Previous Period"
       height={height}
       noPadding={false}
@@ -117,35 +167,15 @@ export const ComparativeChart: React.FC<ComparativeChartProps> = ({
           xKey="period"
           yKeys={["value"]}
           domainPadding={{ left: 50, right: 50, top: 20, bottom: 50 }}
-          chartPressState={state}
         >
           {({ points, chartBounds }) => (
-            <>
-              <Bar
-                points={points.value}
-                chartBounds={chartBounds}
-                color={({ datum }) => datum.period === 'Current' ? chartColors.primary : chartColors.palette[1]}
-                barWidth={60}
-                roundedCorners={{ topLeft: 4, topRight: 4 }}
-              />
-
-              {/* Tooltip */}
-              {isActive && (
-                <View
-                  style={[
-                    styles.tooltipContainer,
-                    {
-                      left: state.x.position - 40,
-                      top: state.y.value.position - 40,
-                    },
-                  ]}
-                >
-                  <Text style={styles.tooltipText}>
-                    {chartFormatters.calories(state.y.value.value)}
-                  </Text>
-                </View>
-              )}
-            </>
+            <Bar
+              points={points.value}
+              chartBounds={chartBounds}
+              color={chartColors.palette[0]}
+              barWidth={60}
+              roundedCorners={{ topLeft: 4, topRight: 4 }}
+            />
           )}
         </CartesianChart>
       </View>
