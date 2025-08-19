@@ -1,21 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { View, Dimensions, ScrollView, Text, TouchableOpacity } from 'react-native';
-import {
-  VictoryLine,
-  VictoryArea,
-  VictoryChart,
-  VictoryAxis,
-  VictoryLabel,
-  VictoryScatter,
-  VictoryContainer,
-  VictoryTooltip,
-  VictoryVoronoiContainer,
-} from 'victory-native';
+import { View, Dimensions, ScrollView, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { CartesianChart, Line, Area, useChartPressState } from 'victory-native';
 import { format, subDays, startOfDay } from 'date-fns';
-import { useChartTheme, useChartColors, chartFormatters } from './common/ChartTheme';
+import { useChartColors, chartFormatters } from './common/ChartTheme';
 import { ChartContainer, ChartPeriodSelector, ChartEmptyState } from './common/ChartContainer';
 import { useWeightEntries } from '@/hooks/useWeightEntries';
 import { useProfile } from '@/hooks/useProfile';
+import { useTheme } from '@/constants/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -40,14 +31,20 @@ export const WeightChart: React.FC<WeightChartProps> = ({
 }) => {
   const [selectedPeriod, setSelectedPeriod] = useState(days.toString());
   const [chartType, setChartType] = useState(initialChartType);
-  const chartTheme = useChartTheme();
   const chartColors = useChartColors();
+  const { colors } = useTheme();
   const { profile } = useProfile();
-  const { weightEntries, loading, error } = useWeightEntries();
+  const { weightEntries } = useWeightEntries();
 
   // Get weight goal and units
   const weightGoal = profile?.target_weight || 0;
   const weightUnit = profile?.preferred_units === 'imperial' ? 'lbs' : 'kg';
+
+  // Chart press state for interactions
+  const { state, isActive } = useChartPressState({ 
+    x: 0, 
+    y: { weight: 0 } 
+  });
 
   // Prepare chart data
   const chartData = useMemo(() => {
@@ -61,139 +58,81 @@ export const WeightChart: React.FC<WeightChartProps> = ({
     );
 
     // Get entries within the period
-    for (let i = periodDays - 1; i >= 0; i--) {
-      const date = subDays(today, i);
-      const dateStr = format(date, 'yyyy-MM-dd');
-      
-      // Find weight entry for this date
-      const entry = sortedEntries.find(e => 
-        format(new Date(e.date), 'yyyy-MM-dd') === dateStr
-      );
+    const filteredEntries = sortedEntries.filter(entry => {
+      const entryDate = new Date(entry.date);
+      const cutoffDate = subDays(today, periodDays);
+      return entryDate >= cutoffDate && entryDate <= today;
+    });
 
-      if (entry) {
-        const weight = weightUnit === 'kg' && entry.weight 
-          ? entry.weight * 0.453592 // Convert lbs to kg if needed
-          : entry.weight;
+    // Convert to chart data format
+    filteredEntries.forEach(entry => {
+      const weight = weightUnit === 'kg' && entry.weight 
+        ? entry.weight * 0.453592 // Convert lbs to kg if needed
+        : entry.weight;
 
-        data.push({
-          x: format(date, 'MMM dd'),
-          y: parseFloat(weight.toFixed(1)),
-          date: date,
-          label: chartFormatters.weight(weight, weightUnit),
-        });
-      }
-    }
+      data.push({
+        day: format(new Date(entry.date), 'MMM dd'),
+        weight: parseFloat(weight.toFixed(1)),
+        date: new Date(entry.date),
+        goal: weightGoal,
+      });
+    });
 
-    // If no data points, return empty array
-    if (data.length === 0) return [];
+    return data;
+  }, [weightEntries, selectedPeriod, weightUnit, weightGoal]);
 
-    // Fill in missing data points with interpolation
-    const filledData = [];
-    for (let i = 0; i < data.length; i++) {
-      filledData.push(data[i]);
-      
-      // Check if there's a gap to the next point
-      if (i < data.length - 1) {
-        const currentDate = data[i].date;
-        const nextDate = data[i + 1].date;
-        const daysDiff = Math.floor((nextDate - currentDate) / (1000 * 60 * 60 * 24));
-        
-        // If gap is more than 1 day, interpolate
-        if (daysDiff > 1) {
-          const weightDiff = data[i + 1].y - data[i].y;
-          const weightPerDay = weightDiff / daysDiff;
-          
-          for (let j = 1; j < daysDiff; j++) {
-            const interpolatedDate = new Date(currentDate);
-            interpolatedDate.setDate(interpolatedDate.getDate() + j);
-            const interpolatedWeight = data[i].y + (weightPerDay * j);
-            
-            filledData.push({
-              x: format(interpolatedDate, 'MMM dd'),
-              y: parseFloat(interpolatedWeight.toFixed(1)),
-              date: interpolatedDate,
-              label: chartFormatters.weight(interpolatedWeight, weightUnit),
-              interpolated: true,
-            });
-          }
-        }
-      }
-    }
+  const isEmpty = chartData.length === 0;
 
-    return filledData;
-  }, [weightEntries, selectedPeriod, weightUnit]);
-
-  // Calculate min/max for Y axis domain
-  const { minY, maxY } = useMemo(() => {
-    if (chartData.length === 0) {
-      return { minY: 0, maxY: 100 };
-    }
-    
-    const weights = [...chartData.map(d => d.y), weightGoal].filter(w => w > 0);
-    const min = Math.min(...weights);
-    const max = Math.max(...weights);
-    const padding = (max - min) * 0.1 || 5;
-    
-    return {
-      minY: Math.floor(min - padding),
-      maxY: Math.ceil(max + padding),
-    };
-  }, [chartData, weightGoal]);
-
-  // Calculate trend line
-  const trendData = useMemo(() => {
-    if (chartData.length < 2) return [];
-    
-    // Simple linear regression for trend line
-    const n = chartData.length;
-    const sumX = chartData.reduce((sum, _, i) => sum + i, 0);
-    const sumY = chartData.reduce((sum, d) => sum + d.y, 0);
-    const sumXY = chartData.reduce((sum, d, i) => sum + i * d.y, 0);
-    const sumX2 = chartData.reduce((sum, _, i) => sum + i * i, 0);
-    
-    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
-    
-    return [
-      { x: chartData[0].x, y: intercept },
-      { x: chartData[chartData.length - 1].x, y: intercept + slope * (n - 1) },
-    ];
-  }, [chartData]);
-
-  if (loading) {
-    return (
-      <ChartContainer
-        title="Weight Progress"
-        subtitle={weightGoal ? `Goal: ${chartFormatters.weight(weightGoal, weightUnit)}` : undefined}
-        loading={true}
-        height={height}
-      />
-    );
-  }
-
-  if (error) {
-    return (
-      <ChartContainer
-        title="Weight Progress"
-        subtitle={weightGoal ? `Goal: ${chartFormatters.weight(weightGoal, weightUnit)}` : undefined}
-        error="Failed to load weight data"
-        height={height}
-      />
-    );
-  }
-
-  if (chartData.length === 0) {
+  if (isEmpty) {
     return (
       <ChartContainer
         title="Weight Progress"
         subtitle={weightGoal ? `Goal: ${chartFormatters.weight(weightGoal, weightUnit)}` : undefined}
         height={height}
         actions={
-          <ChartPeriodSelector
-            periods={periodOptions}
-            selectedPeriod={selectedPeriod}
-            onPeriodChange={setSelectedPeriod}
-          />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flexDirection: 'row', backgroundColor: colors.border, borderRadius: 8, padding: 2 }}>
+              <TouchableOpacity
+                onPress={() => setChartType('line')}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 6,
+                  backgroundColor: chartType === 'line' ? chartColors.weight.actual : 'transparent',
+                }}
+              >
+                <Text style={{ 
+                  fontSize: 12, 
+                  fontWeight: '500',
+                  color: chartType === 'line' ? '#FFFFFF' : colors.textSecondary,
+                }}>
+                  Line
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setChartType('area')}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 6,
+                  backgroundColor: chartType === 'area' ? chartColors.weight.actual : 'transparent',
+                }}
+              >
+                <Text style={{ 
+                  fontSize: 12, 
+                  fontWeight: '500',
+                  color: chartType === 'area' ? '#FFFFFF' : colors.textSecondary,
+                }}>
+                  Area
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <ChartPeriodSelector
+              periods={periodOptions}
+              selectedPeriod={selectedPeriod}
+              onPeriodChange={setSelectedPeriod}
+            />
+          </View>
         }
       >
         <ChartEmptyState message="No weight entries for this period" />
@@ -201,7 +140,53 @@ export const WeightChart: React.FC<WeightChartProps> = ({
     );
   }
 
-  const chartWidth = Math.max(screenWidth - 32, 350);
+  const styles = StyleSheet.create({
+    chartWrapper: {
+      paddingHorizontal: 16,
+    },
+    summaryContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    summaryItem: {
+      alignItems: 'center',
+    },
+    summaryLabel: {
+      fontSize: 12,
+      color: colors.textSecondary,
+    },
+    summaryValue: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    tooltipContainer: {
+      position: 'absolute',
+      backgroundColor: colors.card,
+      padding: 8,
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    tooltipText: {
+      fontSize: 12,
+      color: colors.text,
+      fontWeight: '500',
+    },
+  });
+
+  const currentWeight = chartData.length > 0 ? chartData[chartData.length - 1].weight : 0;
+  const firstWeight = chartData.length > 0 ? chartData[0].weight : 0;
+  const weightChange = currentWeight - firstWeight;
 
   return (
     <ChartContainer
@@ -211,7 +196,7 @@ export const WeightChart: React.FC<WeightChartProps> = ({
       noPadding={true}
       actions={
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <View style={{ flexDirection: 'row', backgroundColor: chartTheme.axis.style.axis.stroke, borderRadius: 8, padding: 2 }}>
+          <View style={{ flexDirection: 'row', backgroundColor: colors.border, borderRadius: 8, padding: 2 }}>
             <TouchableOpacity
               onPress={() => setChartType('line')}
               style={{
@@ -224,7 +209,7 @@ export const WeightChart: React.FC<WeightChartProps> = ({
               <Text style={{ 
                 fontSize: 12, 
                 fontWeight: '500',
-                color: chartType === 'line' ? '#FFFFFF' : chartTheme.axis.style.tickLabels.fill,
+                color: chartType === 'line' ? '#FFFFFF' : colors.textSecondary,
               }}>
                 Line
               </Text>
@@ -241,7 +226,7 @@ export const WeightChart: React.FC<WeightChartProps> = ({
               <Text style={{ 
                 fontSize: 12, 
                 fontWeight: '500',
-                color: chartType === 'area' ? '#FFFFFF' : chartTheme.axis.style.tickLabels.fill,
+                color: chartType === 'area' ? '#FFFFFF' : colors.textSecondary,
               }}>
                 Area
               </Text>
@@ -256,190 +241,90 @@ export const WeightChart: React.FC<WeightChartProps> = ({
       }
     >
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={{ paddingHorizontal: 16 }}>
-          <VictoryChart
-            theme={chartTheme}
-            width={chartWidth}
-            height={height}
-            padding={{ left: 70, bottom: 60, right: 40, top: 20 }}
-            domain={{ y: [minY, maxY] }}
-            containerComponent={
-              <VictoryVoronoiContainer
-                labels={({ datum }) => datum.label}
-                labelComponent={
-                  <VictoryTooltip
-                    cornerRadius={4}
-                    flyoutStyle={{
-                      stroke: chartTheme.tooltip.flyoutStyle.stroke,
-                      fill: chartTheme.tooltip.flyoutStyle.fill,
-                    }}
-                    style={{
-                      fontSize: 11,
-                      fill: chartTheme.tooltip.style.fill,
-                    }}
-                  />
-                }
-              />
-            }
+        <View style={styles.chartWrapper}>
+          <CartesianChart
+            data={chartData}
+            xKey="day"
+            yKeys={["weight"]}
+            domainPadding={{ left: 50, right: 50, top: 20, bottom: 50 }}
+            chartPressState={state}
           >
-            {/* X Axis */}
-            <VictoryAxis
-              dependentAxis={false}
-              style={{
-                axis: chartTheme.axis.style.axis,
-                tickLabels: {
-                  ...chartTheme.axis.style.tickLabels,
-                  angle: chartData.length > 14 ? -45 : 0,
-                  textAnchor: chartData.length > 14 ? 'end' : 'middle',
-                },
-                grid: { stroke: 'transparent' },
-              }}
-              fixLabelOverlap={true}
-            />
-            
-            {/* Y Axis */}
-            <VictoryAxis
-              dependentAxis
-              style={{
-                axis: chartTheme.axis.style.axis,
-                tickLabels: chartTheme.axis.style.tickLabels,
-                grid: chartTheme.axis.style.grid,
-              }}
-              tickFormat={(t) => t.toString()}
-              label={`Weight (${weightUnit})`}
-              axisLabelComponent={
-                <VictoryLabel
-                  dy={-30}
-                  style={chartTheme.axis.style.axisLabel}
-                />
-              }
-            />
-            
-            {/* Goal Line */}
-            {showGoal && weightGoal > 0 && (
-              <VictoryLine
-                data={[
-                  { x: chartData[0]?.x, y: weightGoal },
-                  { x: chartData[chartData.length - 1]?.x, y: weightGoal },
-                ]}
-                style={{
-                  data: {
-                    stroke: chartColors.weight.goal,
-                    strokeWidth: 2,
-                    strokeDasharray: '5,5',
-                  },
-                }}
-              />
+            {({ points, chartBounds }) => (
+              <>
+                {/* Goal line */}
+                {showGoal && weightGoal > 0 && (
+                  <Line
+                    points={[
+                      { x: chartBounds.left, y: chartBounds.top + (chartBounds.height * 0.5) }, // Simplified goal line
+                      { x: chartBounds.right, y: chartBounds.top + (chartBounds.height * 0.5) },
+                    ]}
+                    color={chartColors.weight.goal}
+                    strokeWidth={2}
+                    pathEffect={{ stroke: { dashArray: [5, 5] } }}
+                  />
+                )}
+                
+                {/* Main Chart */}
+                {chartType === 'area' ? (
+                  <Area
+                    points={points.weight}
+                    chartBounds={chartBounds}
+                    color={chartColors.weight.actual}
+                    opacity={0.3}
+                  />
+                ) : (
+                  <Line
+                    points={points.weight}
+                    color={chartColors.weight.actual}
+                    strokeWidth={2}
+                  />
+                )}
+
+                {/* Tooltip */}
+                {isActive && (
+                  <View
+                    style={[
+                      styles.tooltipContainer,
+                      {
+                        left: state.x.position - 40,
+                        top: state.y.weight.position - 40,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.tooltipText}>
+                      {chartFormatters.weight(state.y.weight.value, weightUnit)}
+                    </Text>
+                  </View>
+                )}
+              </>
             )}
-            
-            {/* Trend Line */}
-            {trendData.length > 0 && (
-              <VictoryLine
-                data={trendData}
-                style={{
-                  data: {
-                    stroke: chartColors.weight.trend,
-                    strokeWidth: 1,
-                    strokeDasharray: '2,2',
-                    opacity: 0.5,
-                  },
-                }}
-              />
-            )}
-            
-            {/* Main Chart */}
-            {chartType === 'area' ? (
-              <VictoryArea
-                data={chartData}
-                style={{
-                  data: {
-                    fill: chartColors.weight.actual,
-                    fillOpacity: 0.3,
-                    stroke: chartColors.weight.actual,
-                    strokeWidth: 2,
-                  },
-                }}
-                interpolation="monotoneX"
-                animate={{
-                  duration: 800,
-                  onLoad: { duration: 500 },
-                }}
-              />
-            ) : (
-              <VictoryLine
-                data={chartData}
-                style={{
-                  data: {
-                    stroke: chartColors.weight.actual,
-                    strokeWidth: 2,
-                  },
-                }}
-                interpolation="monotoneX"
-                animate={{
-                  duration: 800,
-                  onLoad: { duration: 500 },
-                }}
-              />
-            )}
-            
-            {/* Data Points */}
-            <VictoryScatter
-              data={chartData.filter(d => !d.interpolated)}
-              size={4}
-              style={{
-                data: {
-                  fill: chartColors.weight.actual,
-                  stroke: chartTheme.axis.style.axis.stroke,
-                  strokeWidth: 2,
-                },
-              }}
-            />
-          </VictoryChart>
+          </CartesianChart>
         </View>
       </ScrollView>
       
       {/* Summary Stats */}
-      <View style={{ 
-        flexDirection: 'row', 
-        justifyContent: 'space-around', 
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderTopWidth: 1,
-        borderTopColor: chartTheme.axis.style.axis.stroke,
-      }}>
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: chartTheme.axis.style.tickLabels.fill }}>
-            Current
-          </Text>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: chartTheme.axis.style.axisLabel.fill }}>
-            {chartData.length > 0 ? chartFormatters.weight(chartData[chartData.length - 1].y, weightUnit) : '--'}
+      <View style={styles.summaryContainer}>
+        <View style={styles.summaryItem}>
+          <Text style={styles.summaryLabel}>Current</Text>
+          <Text style={styles.summaryValue}>
+            {chartFormatters.weight(currentWeight, weightUnit)}
           </Text>
         </View>
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: chartTheme.axis.style.tickLabels.fill }}>
-            Change
-          </Text>
+        <View style={styles.summaryItem}>
+          <Text style={styles.summaryLabel}>Change</Text>
           <Text style={{ 
             fontSize: 16, 
             fontWeight: '600', 
-            color: chartData.length > 1 && chartData[chartData.length - 1].y < chartData[0].y 
-              ? chartColors.weight.goal 
-              : chartColors.calories.high 
+            color: weightChange < 0 ? chartColors.weight.goal : chartColors.calories.high,
           }}>
-            {chartData.length > 1 
-              ? `${(chartData[chartData.length - 1].y - chartData[0].y > 0 ? '+' : '')}${(chartData[chartData.length - 1].y - chartData[0].y).toFixed(1)} ${weightUnit}`
-              : '--'}
+            {weightChange > 0 ? '+' : ''}{weightChange.toFixed(1)} {weightUnit}
           </Text>
         </View>
         {weightGoal > 0 && (
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 12, color: chartTheme.axis.style.tickLabels.fill }}>
-              To Goal
-            </Text>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: chartTheme.axis.style.axisLabel.fill }}>
-              {chartData.length > 0 
-                ? chartFormatters.weight(Math.abs(chartData[chartData.length - 1].y - weightGoal), weightUnit)
-                : '--'}
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>To Goal</Text>
+            <Text style={styles.summaryValue}>
+              {chartFormatters.weight(Math.abs(currentWeight - weightGoal), weightUnit)}
             </Text>
           </View>
         )}
