@@ -38,9 +38,7 @@
           "merchantIdentifier": "merchant.com.yourcompany.calorietracker",
           "enableGooglePay": false
         }
-      ],
-      "react-native-reanimated",
-      "react-native-gesture-handler"
+      ]
     ],
     "extra": {
       "supabaseUrl": "${EXPO_PUBLIC_SUPABASE_URL}",
