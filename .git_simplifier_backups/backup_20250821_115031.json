@@ -1,0 +1,40 @@
+{
+  "timestamp": "2025-08-21T11:50:31.303837",
+  "current_branch": "main",
+  "commit_hash": "cd8f592c11ad9a6f92f2b4c14099d818b42c1b55",
+  "tags": [
+    "v0.1.0",
+    "v0.1.0-alpha.1",
+    "v0.1.0-alpha.2",
+    "v0.1.0-alpha.3"
+  ],
+  "uncommitted_changes": {
+    "staged_files": [],
+    "modified_files": [
+      {
+        "status": "M",
+        "file": ".gitignore"
+      },
+      {
+        "status": "M",
+        "file": "FOOD_IMPLEMENTATION_PLAN.md"
+      },
+      {
+        "status": "M",
+        "file": "app/(app)/food/index.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/food/FavoritesCarousel.tsx"
+      }
+    ],
+    "untracked_files": [],
+    "has_changes": true
+  },
+  "stash_count": 1,
+  "remote_branches": [
+    "origin/main"
+  ],
+  "operation_context": "increment_to_0.1.0-alpha.4",
+  "backup_id": "backup_20250821_115031"
+}

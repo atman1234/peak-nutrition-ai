@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.4] - 2025-08-21 (Alpha)
+
+### Added | 2025-08-21 11:50:31
+
+- working on improving the food section to be on par with the app we're migrating from, added all options for quick/advanced food entries - fixed login bug where it doesnt redirect, added favorites to food tab/section
+
+### Files Changed (5) | 2025-08-21 11:50:31
+
+- Modified: .gitignore
+- Modified: FOOD_IMPLEMENTATION_PLAN.md
+- Modified: app/(app)/food/index.tsx
+- Modified: src/components/food/FavoritesCarousel.tsx
+- Untracked: .git_simplifier_backups/backup_20250821_115031.json
+
 ## [0.1.0-alpha.3] - 2025-08-21 (Alpha)
 
 ### Added | 2025-08-21 11:46:16

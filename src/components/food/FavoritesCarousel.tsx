@@ -130,7 +130,7 @@ export function FavoritesCarousel({ onSelectFood }: FavoritesCarouselProps) {
     },
     addButtonText: {
       ...TextStyles.caption,
-      color: '#FFFFFF',
+      color: colors.primaryText || '#FFFFFF',
       fontWeight: '600',
       fontSize: 12,
     },

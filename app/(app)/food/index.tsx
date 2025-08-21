@@ -11,7 +11,7 @@ const isTablet = width >= 768;
 export default function FoodLogScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const [quickAddRef, setQuickAddRef] = useState<{ handleFoodSelect?: (food: UnifiedFoodResult) => void }>({});
+  const quickAddRef = React.useRef<{ handleFoodSelect: (food: UnifiedFoodResult) => void }>(null);
 
   const handleSuccess = () => {
     // Don't navigate away - let user continue adding foods
@@ -35,8 +35,8 @@ export default function FoodLogScreen() {
 
   const handleFavoriteSelect = (food: UnifiedFoodResult) => {
     // Pass selected favorite to QuickFoodAdd
-    if (quickAddRef.handleFoodSelect) {
-      quickAddRef.handleFoodSelect(food);
+    if (quickAddRef.current?.handleFoodSelect) {
+      quickAddRef.current.handleFoodSelect(food);
     }
   };
 
@@ -78,7 +78,7 @@ export default function FoodLogScreen() {
           <View style={styles.leftColumn}>
             <FavoritesCarousel onSelectFood={handleFavoriteSelect} />
             <QuickFoodAdd
-              ref={(ref: any) => setQuickAddRef(ref || {})}
+              ref={quickAddRef}
               onSuccess={handleSuccess}
               onCancel={handleCancel}
               showAsFavorite={true}
@@ -108,7 +108,7 @@ export default function FoodLogScreen() {
         </View>
         <View style={styles.mobileSection}>
           <QuickFoodAdd
-            ref={(ref: any) => setQuickAddRef(ref || {})}
+            ref={quickAddRef}
             onSuccess={handleSuccess}
             onCancel={handleCancel}
             showAsFavorite={true}

@@ -1,12 +1,35 @@
 {
-  "current_version": "0.1.0-alpha.3",
+  "current_version": "0.1.0-alpha.4",
   "version_type": "alpha",
   "major": 0,
   "minor": 1,
   "patch": 0,
-  "alpha": 3,
+  "alpha": 4,
   "beta": 0,
   "history": [
+    {
+      "version": "0.1.0-alpha.4",
+      "message": "working on improving the food section to be on par with the app we're migrating from, added all options for quick/advanced food entries - fixed login bug where it doesnt redirect, added favorites to food tab/section",
+      "timestamp": "2025-08-21T18:50:31.547124+00:00",
+      "category": "Added",
+      "files_changed": [
+        {
+          "Modified": ".gitignore"
+        },
+        {
+          "Modified": "FOOD_IMPLEMENTATION_PLAN.md"
+        },
+        {
+          "Modified": "app/(app)/food/index.tsx"
+        },
+        {
+          "Modified": "src/components/food/FavoritesCarousel.tsx"
+        },
+        {
+          "Untracked": ".git_simplifier_backups/backup_20250821_115031.json"
+        }
+      ]
+    },
     {
       "version": "0.1.0-alpha.3",
       "message": "working on improving the food section to be on par with the app we're migrating from, added all options for quick/advanced food entries - fixed login bug where it doesnt redirect, added favorites to food tab/section",
