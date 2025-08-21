@@ -1,0 +1,33 @@
+{
+  "timestamp": "2025-08-21T12:00:07.981630",
+  "current_branch": "main",
+  "commit_hash": "24f6d8a73562b7b4e89824839cd6b391a3d9e13b",
+  "tags": [
+    "v0.1.0",
+    "v0.1.0-alpha.1",
+    "v0.1.0-alpha.2",
+    "v0.1.0-alpha.3",
+    "v0.1.0-alpha.4"
+  ],
+  "uncommitted_changes": {
+    "staged_files": [],
+    "modified_files": [
+      {
+        "status": "M",
+        "file": "src/components/food/FavoritesCarousel.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/food/QuickFoodAdd.tsx"
+      }
+    ],
+    "untracked_files": [],
+    "has_changes": true
+  },
+  "stash_count": 1,
+  "remote_branches": [
+    "origin/main"
+  ],
+  "operation_context": "increment_to_0.1.0-alpha.5",
+  "backup_id": "backup_20250821_120007"
+}

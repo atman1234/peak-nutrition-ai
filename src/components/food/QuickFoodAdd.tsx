@@ -440,11 +440,22 @@ export const QuickFoodAdd = React.forwardRef<
     setSelectedFood(food);
     setValue('searchTerm', food.name);
     
-    // Use typical portion if it's a favorite
-    if (food.isFavorite && food.id) {
-      const suggestion = getPortionSuggestion(food.id, food.name);
-      setValue('portion', suggestion.suggested_portion);
+    // Set brand if available
+    if (food.brand) {
+      setValue('brand', food.brand);
     }
+    
+    // Use typical portion if it's a favorite
+    const portionToUse = (food.isFavorite && food.id) 
+      ? getPortionSuggestion(food.id, food.name).suggested_portion 
+      : 100;
+    setValue('portion', portionToUse);
+    
+    // Populate macro fields with actual food values (per 100g)
+    setValue('customProtein', food.protein_per_100g || 0);
+    setValue('customCarbs', food.carbs_per_100g || 0);
+    setValue('customFat', food.fat_per_100g || 0);
+    setValue('customFiber', food.fiber_per_100g || 0);
   }, [setValue, getPortionSuggestion]);
 
   // Expose handleFoodSelect to parent via ref
@@ -994,7 +1005,7 @@ export const QuickFoodAdd = React.forwardRef<
 
           {/* Macros - Show in both modes, but more fields in advanced */}
           <View style={styles.fieldSection}>
-            <Text style={styles.sectionTitle}>Macros (optional override)</Text>
+            <Text style={styles.sectionTitle}>Macros (per 100g)</Text>
             <View style={styles.macroRow}>
               <View style={styles.macroField}>
                 <Text style={styles.fieldLabel}>Protein (g)</Text>

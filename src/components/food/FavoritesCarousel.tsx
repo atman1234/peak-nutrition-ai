@@ -10,7 +10,7 @@ interface FavoritesCarouselProps {
   onSelectFood: (food: UnifiedFoodResult) => void;
 }
 
-const ITEMS_PER_PAGE = 3;
+const ITEMS_PER_PAGE = Platform.OS === 'web' ? 3 : 2;
 
 export function FavoritesCarousel({ onSelectFood }: FavoritesCarouselProps) {
   const { colors } = useTheme();
@@ -130,7 +130,7 @@ export function FavoritesCarousel({ onSelectFood }: FavoritesCarouselProps) {
     },
     addButtonText: {
       ...TextStyles.caption,
-      color: colors.primaryText || '#FFFFFF',
+      color: colors.textOnPrimary,
       fontWeight: '600',
       fontSize: 12,
     },
@@ -279,11 +279,9 @@ export function FavoritesCarousel({ onSelectFood }: FavoritesCarouselProps) {
                     {favorite.food_item.name}
                   </Text>
                   
-                  {favorite.food_item.brand && (
-                    <Text style={styles.brandName} numberOfLines={1}>
-                      {favorite.food_item.brand}
-                    </Text>
-                  )}
+                  <Text style={styles.brandName} numberOfLines={1}>
+                    {favorite.food_item.brand || ' '}
+                  </Text>
 
                   <View style={styles.nutritionRow}>
                     <View style={styles.nutritionItem}>

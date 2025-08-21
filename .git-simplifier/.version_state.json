@@ -1,12 +1,29 @@
 {
-  "current_version": "0.1.0-alpha.4",
+  "current_version": "0.1.0-alpha.5",
   "version_type": "alpha",
   "major": 0,
   "minor": 1,
   "patch": 0,
-  "alpha": 4,
+  "alpha": 5,
   "beta": 0,
   "history": [
+    {
+      "version": "0.1.0-alpha.5",
+      "message": "working on improving the food section to be on par with the app we're migrating from, added all options for quick/advanced food entries - fixed login bug where it doesnt redirect, added favorites to food tab/section, cut down mobile to 2 favorites/page, got macros working again",
+      "timestamp": "2025-08-21T19:00:08.256908+00:00",
+      "category": "Added",
+      "files_changed": [
+        {
+          "Modified": "src/components/food/FavoritesCarousel.tsx"
+        },
+        {
+          "Modified": "src/components/food/QuickFoodAdd.tsx"
+        },
+        {
+          "Untracked": ".git_simplifier_backups/backup_20250821_120007.json"
+        }
+      ]
+    },
     {
       "version": "0.1.0-alpha.4",
       "message": "working on improving the food section to be on par with the app we're migrating from, added all options for quick/advanced food entries - fixed login bug where it doesnt redirect, added favorites to food tab/section",
