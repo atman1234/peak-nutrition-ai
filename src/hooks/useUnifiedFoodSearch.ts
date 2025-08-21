@@ -1,6 +1,7 @@
 import { useFoodItems } from './useFoodItems'
 import { useFavorites } from './useFavorites'
 import { searchAndConvertUSDAFoods } from '../lib/usda-api'
+import { Json } from '@/types/supabase'
 
 export interface UnifiedFoodResult {
   id: string
@@ -16,6 +17,7 @@ export interface UnifiedFoodResult {
   source: 'user_input' | 'usda' | 'ai_estimate' | 'verified'
   usda_food_id?: string
   confidence_score?: number
+  ingredients?: Json
   // Unified search specific fields
   relevanceScore: number
   resultType: 'favorite' | 'saved' | 'usda_foundation' | 'usda_branded'

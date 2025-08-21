@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.3] - 2025-08-21 (Alpha)
+
+### Added | 2025-08-21 11:46:16
+
+- working on improving the food section to be on par with the app we're migrating from, added all options for quick/advanced food entries - fixed login bug where it doesnt redirect, added favorites to food tab/section
+
 ## [0.1.0-alpha.2] - 2025-08-21 (Alpha)
 
 ### Added | 2025-08-21 11:11:46

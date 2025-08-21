@@ -37,7 +37,8 @@ export default function LoginScreen() {
         Alert.alert('Login Failed', `${error.message}\n\nTip: If you don't have an account yet, try signing up first.`);
       } else {
         console.log('Login successful');
-        // Navigation will be handled by the auth context listener
+        // Navigate to root route which will check auth and redirect to app
+        router.replace('/');
       }
     } catch (error: any) {
       console.log('Login exception:', error);

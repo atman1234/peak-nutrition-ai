@@ -20,6 +20,7 @@ import { UnifiedFoodResult } from '../../hooks/useUnifiedFoodSearch';
 import { useFoodLogs } from '../../hooks/useFoodLogs';
 import { useFavorites } from '../../hooks/useFavorites';
 import { usePortionHistory } from '../../hooks/usePortionHistory';
+import { useAIFoodParser } from '../../hooks/useAIFoodParser';
 import { MealType } from '../../types/food';
 import { useTheme, TextStyles, Spacing } from '../../constants';
 import { Button, Card, LoadingSpinner } from '../ui';
@@ -51,23 +52,39 @@ interface AdvancedFormData extends FoodLogFormData {
   customFiber?: number;
 }
 
-export function QuickFoodAdd({ 
+export const QuickFoodAdd = React.forwardRef<
+  { handleFoodSelect: (food: UnifiedFoodResult) => void },
+  QuickFoodAddProps
+>(function QuickFoodAdd({ 
   onSuccess, 
   onCancel,
   defaultMealType,
   showAsFavorite = true,
-}: QuickFoodAddProps) {
+}, ref) {
   const [selectedFood, setSelectedFood] = useState<UnifiedFoodResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formMode, setFormMode] = useState<FormMode>('basic');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showWebDatePicker, setShowWebDatePicker] = useState(false);
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
 
   const { colors } = useTheme();
   const { addFoodLog } = useFoodLogs();
   const { addFavorite, isFavorite, canAddMoreFavorites } = useFavorites();
   const { getPortionSuggestion } = usePortionHistory();
+  const { 
+    parseFood, 
+    isParsingFood, 
+    parseError, 
+    lastParsedFood, 
+    requestsRemaining, 
+    hasAIFeatures, 
+    canMakeRequest,
+    convertToFoodLogFormat,
+    clearLastParsed 
+  } = useAIFoodParser();
 
   // Get validation context for smart defaults
   const validationContext = getValidationContext();
@@ -107,7 +124,6 @@ export function QuickFoodAdd({
   const styles = React.useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
-      maxHeight: Platform.OS === 'web' ? '100vh' : undefined,
     },
     scrollView: {
       flex: 1,
@@ -115,8 +131,7 @@ export function QuickFoodAdd({
     scrollContent: {
       padding: Spacing.md,
       gap: Spacing.md,
-      paddingBottom: Spacing.xl * 2, // Extra padding for mobile keyboards
-      minHeight: Platform.OS === 'web' ? '100%' : undefined,
+      paddingBottom: Spacing.xl * 2,
     },
     loadingContainer: {
       flex: 1,
@@ -255,6 +270,162 @@ export function QuickFoodAdd({
       flexDirection: 'row',
       gap: Spacing.sm,
     },
+    // AI Assistant Styles
+    aiAssistantHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: Spacing.md,
+    },
+    aiAssistantTitle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
+    },
+    aiAssistantTitleText: {
+      ...TextStyles.h4,
+      color: colors.text,
+      fontWeight: '600',
+    },
+    aiUsageIndicator: {
+      backgroundColor: colors.gold,
+      borderRadius: Spacing.borderRadius.sm,
+      paddingHorizontal: Spacing.xs,
+      paddingVertical: 2,
+    },
+    aiUsageText: {
+      ...TextStyles.caption,
+      color: '#FFFFFF',
+      fontSize: 10,
+      fontWeight: '600',
+    },
+    aiAssistantActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    aiToggleButton: {
+      paddingHorizontal: Platform.OS === 'web' ? Spacing.sm : Spacing.xs,
+      paddingVertical: 2,
+      minHeight: 24,
+    },
+    usdaButton: {
+      paddingHorizontal: Platform.OS === 'web' ? Spacing.sm : Spacing.xs,
+      paddingVertical: 2,
+      minHeight: 24,
+    },
+    aiInputContainer: {
+      borderWidth: 1,
+      borderColor: colors.gold,
+      borderRadius: Spacing.borderRadius.md,
+      backgroundColor: colors.surface,
+      marginBottom: Spacing.sm,
+    },
+    aiInput: {
+      ...TextStyles.body,
+      color: colors.text,
+      padding: Spacing.md,
+      fontSize: 16,
+      minHeight: 80,
+      textAlignVertical: 'top',
+    },
+    aiInputActions: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+      padding: Spacing.md,
+      paddingTop: 0,
+    },
+    aiParseButton: {
+      flex: 1,
+    },
+    manualSearchButton: {
+      flex: 1,
+    },
+    aiResultsContainer: {
+      backgroundColor: colors.backgroundSecondary,
+      borderRadius: Spacing.borderRadius.md,
+      padding: Spacing.md,
+      borderLeftWidth: 4,
+      borderLeftColor: colors.gold,
+    },
+    aiResultsHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: Spacing.md,
+    },
+    aiResultsTitle: {
+      ...TextStyles.bodyLarge,
+      color: colors.text,
+      fontWeight: '600',
+    },
+    confidenceIndicator: {
+      alignItems: 'flex-end',
+    },
+    confidenceText: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      marginBottom: Spacing.xs,
+    },
+    confidenceBar: {
+      width: 60,
+      height: 4,
+      backgroundColor: colors.border,
+      borderRadius: 2,
+    },
+    confidenceBarFill: {
+      height: '100%',
+      backgroundColor: colors.gold,
+      borderRadius: 2,
+    },
+    aiMealSuggestion: {
+      backgroundColor: colors.surface,
+      borderRadius: Spacing.borderRadius.md,
+      padding: Spacing.md,
+    },
+    aiMealTitle: {
+      ...TextStyles.bodyLarge,
+      color: colors.text,
+      fontWeight: '600',
+      marginBottom: Spacing.xs,
+    },
+    aiMealDescription: {
+      ...TextStyles.body,
+      color: colors.textSecondary,
+      marginBottom: Spacing.md,
+    },
+    aiNutritionPreview: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: Spacing.md,
+    },
+    aiNutritionItem: {
+      alignItems: 'center',
+    },
+    aiNutritionLabel: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      marginBottom: Spacing.xs,
+    },
+    aiNutritionValue: {
+      ...TextStyles.bodyLarge,
+      color: colors.text,
+      fontWeight: '600',
+    },
+    aiActions: {
+      flexDirection: 'row',
+      gap: Spacing.md,
+    },
+    webDatePickerContainer: {
+      backgroundColor: colors.surface,
+      borderRadius: Spacing.borderRadius.lg,
+      minWidth: Platform.OS === 'web' ? 400 : '90%',
+      maxWidth: '90%',
+      alignSelf: 'center',
+    },
+    webDatePickerContent: {
+      padding: Spacing.lg,
+    },
   }), [colors]);
 
   function getCurrentMealType(): MealType {
@@ -275,6 +446,11 @@ export function QuickFoodAdd({
       setValue('portion', suggestion.suggested_portion);
     }
   }, [setValue, getPortionSuggestion]);
+
+  // Expose handleFoodSelect to parent via ref
+  React.useImperativeHandle(ref, () => ({
+    handleFoodSelect
+  }), [handleFoodSelect]);
 
   const handleSearchTermChange = useCallback((text: string) => {
     setValue('searchTerm', text);
@@ -456,7 +632,7 @@ export function QuickFoodAdd({
     const manualFood: UnifiedFoodResult = {
       id: `manual_${Date.now()}`,
       name: watchedValues.searchTerm,
-      source: 'manual',
+      source: 'user_input',
       calories_per_100g: watchedValues.customProtein ? 
         (watchedValues.customProtein * 4) + 
         ((watchedValues.customCarbs || 0) * 4) + 
@@ -466,7 +642,7 @@ export function QuickFoodAdd({
       fat_per_100g: watchedValues.customFat || 0,
       fiber_per_100g: watchedValues.customFiber || 0,
       brand: watchedValues.brand,
-      is_favorite: false,
+      isFavorite: false,
       ingredients: watchedValues.ingredients ? [watchedValues.ingredients] : undefined,
     };
 
@@ -515,23 +691,191 @@ export function QuickFoodAdd({
             />
           </View>
 
-          {/* Search Food */}
+          {/* AI Assistant - Pro Feature */}
           <View style={styles.fieldSection}>
-            <Text style={styles.fieldLabel}>Food Name</Text>
-            <Controller
-              name="searchTerm"
-              control={control}
-              render={({ field: { value } }) => (
-                <FoodAutocomplete
-                  value={value}
-                  onChangeText={handleSearchTermChange}
-                  onSelectFood={handleFoodSelect}
-                  placeholder="Type food name and press Enter to search..."
-                  error={errors.searchTerm?.message}
+            <View style={styles.aiAssistantHeader}>
+              <View style={styles.aiAssistantTitle}>
+                <Ionicons name="sparkles" size={16} color={colors.gold} />
+                <Text style={styles.aiAssistantTitleText}>AI Assistant</Text>
+                <View style={styles.aiUsageIndicator}>
+                  <Text style={styles.aiUsageText}>({requestsRemaining})</Text>
+                </View>
+              </View>
+              <View style={styles.aiAssistantActions}>
+                <Button
+                  title="AI"
+                  variant={showAIAssistant ? "primary" : "outline"}
+                  onPress={() => setShowAIAssistant(!showAIAssistant)}
+                  style={styles.aiToggleButton}
+                  icon={<Ionicons name="sparkles" size={16} color={showAIAssistant ? "#FFFFFF" : colors.gold} />}
                 />
-              )}
-            />
+                <Button
+                  title="Search USDA"
+                  variant="outline"
+                  onPress={() => {
+                    // TODO: Implement USDA search modal
+                    Alert.alert('USDA Search', 'USDA search modal will be implemented next');
+                  }}
+                  style={styles.usdaButton}
+                />
+              </View>
+            </View>
           </View>
+
+          {/* AI Natural Language Input */}
+          {showAIAssistant && (
+            <View style={styles.fieldSection}>
+              <View style={styles.aiInputContainer}>
+              <Controller
+                name="searchTerm"
+                control={control}
+                render={({ field: { value } }) => (
+                  <TextInput
+                    style={[
+                      styles.aiInput,
+                      errors.searchTerm && styles.textInputError,
+                    ]}
+                    value={value}
+                    onChangeText={handleSearchTermChange}
+                    placeholder="Try: '2 slices of pepperoni pizza' or '1 cup of cooked rice'"
+                    placeholderTextColor={colors.textSecondary}
+                    multiline
+                  />
+                )}
+              />
+              <View style={styles.aiInputActions}>
+                <Button
+                  title={isParsingFood ? "Parsing..." : "Parse with AI"}
+                  variant="primary"
+                  onPress={() => {
+                    if (!watchedValues.searchTerm?.trim()) {
+                      Alert.alert('Enter Food Description', 'Please enter a food description to parse with AI');
+                      return;
+                    }
+                    if (!canMakeRequest) {
+                      Alert.alert('AI Unavailable', hasAIFeatures ? 'No AI requests remaining this month' : 'AI features require Pro subscription');
+                      return;
+                    }
+                    parseFood(watchedValues.searchTerm);
+                  }}
+                  disabled={isParsingFood || !canMakeRequest || !watchedValues.searchTerm?.trim()}
+                  style={styles.aiParseButton}
+                  icon={<Ionicons name={isParsingFood ? "hourglass" : "sparkles"} size={16} color="#FFFFFF" />}
+                />
+              </View>
+            </View>
+            </View>
+          )}
+
+          {/* AI Results Section - Show when AI has parsed something */}
+          {showAIAssistant && lastParsedFood && (
+            <View style={styles.fieldSection}>
+              <View style={styles.aiResultsContainer}>
+                <View style={styles.aiResultsHeader}>
+                  <Text style={styles.aiResultsTitle}>AI Parsing Results</Text>
+                  <View style={styles.confidenceIndicator}>
+                    <Text style={styles.confidenceText}>
+                      {lastParsedFood.confidence_score > 0.8 ? 'High Confidence' : 
+                       lastParsedFood.confidence_score > 0.6 ? 'Medium Confidence' : 'Low Confidence'}
+                    </Text>
+                    <View style={styles.confidenceBar}>
+                      <View style={[styles.confidenceBarFill, { width: `${lastParsedFood.confidence_score * 100}%` }]} />
+                    </View>
+                  </View>
+                </View>
+                
+                <View style={styles.aiMealSuggestion}>
+                  <Text style={styles.aiMealTitle}>{lastParsedFood.food_name}</Text>
+                  <Text style={styles.aiMealDescription}>
+                    {lastParsedFood.reasoning || lastParsedFood.notes || `${lastParsedFood.portion_grams}g serving`}
+                    {lastParsedFood.cached && ' (from cache)'}
+                  </Text>
+                  
+                  <View style={styles.aiNutritionPreview}>
+                    <View style={styles.aiNutritionItem}>
+                      <Text style={styles.aiNutritionLabel}>Calories</Text>
+                      <Text style={styles.aiNutritionValue}>{Math.round(lastParsedFood.calories)}</Text>
+                    </View>
+                    <View style={styles.aiNutritionItem}>
+                      <Text style={styles.aiNutritionLabel}>Protein</Text>
+                      <Text style={styles.aiNutritionValue}>{lastParsedFood.protein.toFixed(1)}g</Text>
+                    </View>
+                    <View style={styles.aiNutritionItem}>
+                      <Text style={styles.aiNutritionLabel}>Carbs</Text>
+                      <Text style={styles.aiNutritionValue}>{lastParsedFood.carbs.toFixed(1)}g</Text>
+                    </View>
+                    <View style={styles.aiNutritionItem}>
+                      <Text style={styles.aiNutritionLabel}>Fat</Text>
+                      <Text style={styles.aiNutritionValue}>{lastParsedFood.fat.toFixed(1)}g</Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.aiActions}>
+                    <Button
+                      title="Use This"
+                      variant="primary"
+                      onPress={() => {
+                        // Convert AI result to UnifiedFoodResult and select it
+                        const aiFood: UnifiedFoodResult = {
+                          id: `ai_${Date.now()}`,
+                          name: lastParsedFood.food_name,
+                          source: 'ai',
+                          calories_per_100g: (lastParsedFood.calories / lastParsedFood.portion_grams) * 100,
+                          protein_per_100g: (lastParsedFood.protein / lastParsedFood.portion_grams) * 100,
+                          carbs_per_100g: (lastParsedFood.carbs / lastParsedFood.portion_grams) * 100,
+                          fat_per_100g: (lastParsedFood.fat / lastParsedFood.portion_grams) * 100,
+                          fiber_per_100g: lastParsedFood.fiber ? (lastParsedFood.fiber / lastParsedFood.portion_grams) * 100 : undefined,
+                          brand: lastParsedFood.brand,
+                          is_favorite: false,
+                          ingredients: lastParsedFood.ingredients,
+                        };
+                        
+                        setSelectedFood(aiFood);
+                        setValue('portion', lastParsedFood.portion_grams);
+                        setValue('searchTerm', lastParsedFood.food_name);
+                        if (lastParsedFood.brand) {
+                          setValue('brand', lastParsedFood.brand);
+                        }
+                        
+                        clearLastParsed();
+                      }}
+                      style={{ flex: 1 }}
+                    />
+                    <Button
+                      title="Try Again"
+                      variant="ghost"
+                      onPress={() => {
+                        if (watchedValues.searchTerm?.trim()) {
+                          parseFood(watchedValues.searchTerm, true); // Force refresh
+                        }
+                      }}
+                      style={{ flex: 1 }}
+                    />
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Traditional Food Search */}
+          {!showAIAssistant && (
+            <View style={styles.fieldSection}>
+              <Text style={styles.fieldLabel}>Search Food Database</Text>
+              <Controller
+                name="searchTerm"
+                control={control}
+                render={({ field: { value } }) => (
+                  <FoodAutocomplete
+                    value={value}
+                    onChangeText={handleSearchTermChange}
+                    onSelectFood={handleFoodSelect}
+                    placeholder="Type food name and press Enter to search..."
+                    error={errors.searchTerm?.message}
+                  />
+                )}
+              />
+            </View>
+          )}
 
           {/* Advanced Mode Brand Field */}
           {formMode === 'advanced' && (
@@ -609,7 +953,13 @@ export function QuickFoodAdd({
                 <Button
                   title={format(value || selectedDate, 'MM/dd/yyyy, h:mm a')}
                   variant="outline"
-                  onPress={() => setShowDatePicker(true)}
+                  onPress={() => {
+                    if (Platform.OS === 'web') {
+                      setShowWebDatePicker(true);
+                    } else {
+                      setShowDatePicker(true);
+                    }
+                  }}
                   style={styles.dateTimeButton}
                   icon={<Ionicons name="calendar-outline" size={16} color={colors.text} />}
                 />
@@ -644,9 +994,10 @@ export function QuickFoodAdd({
 
           {/* Macros - Show in both modes, but more fields in advanced */}
           <View style={styles.fieldSection}>
-            <Text style={styles.fieldLabel}>Protein (g)</Text>
-            <View style={styles.twoColumnRow}>
-              <View style={styles.halfField}>
+            <Text style={styles.sectionTitle}>Macros (optional override)</Text>
+            <View style={styles.macroRow}>
+              <View style={styles.macroField}>
+                <Text style={styles.fieldLabel}>Protein (g)</Text>
                 <Controller
                   name="customProtein"
                   control={control}
@@ -662,7 +1013,7 @@ export function QuickFoodAdd({
                   )}
                 />
               </View>
-              <View style={styles.halfField}>
+              <View style={styles.macroField}>
                 <Text style={styles.fieldLabel}>Carbs (g)</Text>
                 <Controller
                   name="customCarbs"
@@ -680,8 +1031,8 @@ export function QuickFoodAdd({
                 />
               </View>
             </View>
-            <View style={styles.twoColumnRow}>
-              <View style={styles.halfField}>
+            <View style={styles.macroRow}>
+              <View style={styles.macroField}>
                 <Text style={styles.fieldLabel}>Fat (g)</Text>
                 <Controller
                   name="customFat"
@@ -698,8 +1049,8 @@ export function QuickFoodAdd({
                   )}
                 />
               </View>
-              {formMode === 'advanced' && (
-                <View style={styles.halfField}>
+              {formMode === 'advanced' ? (
+                <View style={styles.macroField}>
                   <Text style={styles.fieldLabel}>Fiber (g)</Text>
                   <Controller
                     name="customFiber"
@@ -716,6 +1067,8 @@ export function QuickFoodAdd({
                     )}
                   />
                 </View>
+              ) : (
+                <View style={styles.macroField} />
               )}
             </View>
           </View>
@@ -756,40 +1109,40 @@ export function QuickFoodAdd({
               icon={<Ionicons name="lock-closed" size={16} color={colors.text} />}
             />
           )}
+
+          {/* Show nutrition preview and favorites option when food is selected */}
+          {selectedFood && (
+            <>
+              <FoodNutritionPreview
+                food={selectedFood}
+                portionGrams={watchedValues.portion}
+              />
+
+              {showAsFavorite && !isFavorite(selectedFood.id) && canAddMoreFavorites && (
+                <View style={styles.favoritesSection}>
+                  <Controller
+                    name="addToFavorites"
+                    control={control}
+                    render={({ field: { value, onChange } }) => (
+                      <Button
+                        title={value ? "Remove from Favorites" : "Add to Favorites"}
+                        variant={value ? "outline" : "ghost"}
+                        onPress={() => onChange(!value)}
+                        icon={
+                          <Ionicons 
+                            name={value ? "heart" : "heart-outline"} 
+                            size={20} 
+                            color={value ? colors.crimson : colors.textSecondary} 
+                          />
+                        }
+                      />
+                    )}
+                  />
+                </View>
+              )}
+            </>
+          )}
         </Card>
-
-        {/* Show nutrition preview and favorites option when food is selected */}
-        {selectedFood && (
-          <>
-            <FoodNutritionPreview
-              food={selectedFood}
-              portionGrams={watchedValues.portion}
-            />
-
-            {showAsFavorite && !isFavorite(selectedFood.id) && canAddMoreFavorites && (
-              <Card style={styles.favoritesSection}>
-                <Controller
-                  name="addToFavorites"
-                  control={control}
-                  render={({ field: { value, onChange } }) => (
-                    <Button
-                      title={value ? "Remove from Favorites" : "Add to Favorites"}
-                      variant={value ? "outline" : "ghost"}
-                      onPress={() => onChange(!value)}
-                      icon={
-                        <Ionicons 
-                          name={value ? "heart" : "heart-outline"} 
-                          size={20} 
-                          color={value ? colors.crimson : colors.textSecondary} 
-                        />
-                      }
-                    />
-                  )}
-                />
-              </Card>
-            )}
-          </>
-        )}
 
         <View style={styles.actionButtons}>
           <Button
@@ -903,7 +1256,54 @@ export function QuickFoodAdd({
             }}
           />
         )}
+        
+        {/* Web date picker modal */}
+        {showWebDatePicker && Platform.OS === 'web' && (
+          <Modal
+            transparent
+            animationType="fade"
+            visible={showWebDatePicker}
+            onRequestClose={() => setShowWebDatePicker(false)}
+          >
+            <TouchableWithoutFeedback onPress={() => setShowWebDatePicker(false)}>
+              <View style={styles.modalOverlay}>
+                <TouchableWithoutFeedback>
+                  <View style={styles.webDatePickerContainer}>
+                    <View style={styles.datePickerHeader}>
+                      <Text style={styles.datePickerTitle}>Select Date & Time</Text>
+                      <Button
+                        title="Done"
+                        variant="primary"
+                        onPress={() => setShowWebDatePicker(false)}
+                      />
+                    </View>
+                    <View style={styles.webDatePickerContent}>
+                      <input
+                        type="datetime-local"
+                        value={format(selectedDate, "yyyy-MM-dd'T'HH:mm")}
+                        onChange={(e) => {
+                          const newDate = new Date(e.target.value);
+                          setSelectedDate(newDate);
+                          setValue('loggedAt', newDate);
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: Spacing.md,
+                          fontSize: 16,
+                          borderRadius: Spacing.borderRadius.md,
+                          border: `1px solid ${colors.border}`,
+                          backgroundColor: colors.surface,
+                          color: colors.text,
+                        }}
+                      />
+                    </View>
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
-}
+});

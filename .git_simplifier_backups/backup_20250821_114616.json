@@ -1,0 +1,61 @@
+{
+  "timestamp": "2025-08-21T11:46:16.372824",
+  "current_branch": "main",
+  "commit_hash": "19fb493bed3c8c43d9482ff09722d441dd2d8785",
+  "tags": [
+    "v0.1.0",
+    "v0.1.0-alpha.1",
+    "v0.1.0-alpha.2"
+  ],
+  "uncommitted_changes": {
+    "staged_files": [],
+    "modified_files": [
+      {
+        "status": "M",
+        "file": "FOOD_IMPLEMENTATION_PLAN.md"
+      },
+      {
+        "status": "M",
+        "file": "app/(app)/food/index.tsx"
+      },
+      {
+        "status": "M",
+        "file": "app/(auth)/login.tsx"
+      },
+      {
+        "status": "M",
+        "file": "app/_layout.tsx"
+      },
+      {
+        "status": "M",
+        "file": "bun.lock"
+      },
+      {
+        "status": "M",
+        "file": "package.json"
+      },
+      {
+        "status": "M",
+        "file": "src/components/food/QuickFoodAdd.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/food/index.ts"
+      },
+      {
+        "status": "M",
+        "file": "src/hooks/useUnifiedFoodSearch.ts"
+      }
+    ],
+    "untracked_files": [
+      "src/components/food/FavoritesCarousel.tsx"
+    ],
+    "has_changes": true
+  },
+  "stash_count": 1,
+  "remote_branches": [
+    "origin/main"
+  ],
+  "operation_context": "increment_to_0.1.0-alpha.3",
+  "backup_id": "backup_20250821_114616"
+}

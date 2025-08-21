@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '../src/components/auth/AuthContext';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Linking from 'expo-linking';
 import '../global.css'; // NativeWind global styles
@@ -62,6 +64,7 @@ export default function RootLayout() {
             }} 
           />
         </Stack>
+        {Platform.OS === 'web' && <SpeedInsights />}
       </AuthProvider>
     </QueryClientProvider>
   );

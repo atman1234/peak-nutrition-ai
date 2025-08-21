@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, Dimensions, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { QuickFoodAdd, TodaysFoodLog } from '../../../src/components/food';
+import { QuickFoodAdd, TodaysFoodLog, FavoritesCarousel } from '../../../src/components/food';
 import { useTheme, Spacing } from '../../../src/constants';
+import { UnifiedFoodResult } from '../../../src/hooks/useUnifiedFoodSearch';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
@@ -10,6 +11,7 @@ const isTablet = width >= 768;
 export default function FoodLogScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const [quickAddRef, setQuickAddRef] = useState<{ handleFoodSelect?: (food: UnifiedFoodResult) => void }>({});
 
   const handleSuccess = () => {
     // Don't navigate away - let user continue adding foods
@@ -29,6 +31,13 @@ export default function FoodLogScreen() {
   const handleDeleteEntry = (entryId: string) => {
     // TODO: Implement delete functionality  
     console.log('Delete entry:', entryId);
+  };
+
+  const handleFavoriteSelect = (food: UnifiedFoodResult) => {
+    // Pass selected favorite to QuickFoodAdd
+    if (quickAddRef.handleFoodSelect) {
+      quickAddRef.handleFoodSelect(food);
+    }
   };
 
   const styles = React.useMemo(() => StyleSheet.create({
@@ -67,7 +76,9 @@ export default function FoodLogScreen() {
       <View style={styles.container}>
         <View style={styles.tabletContainer}>
           <View style={styles.leftColumn}>
+            <FavoritesCarousel onSelectFood={handleFavoriteSelect} />
             <QuickFoodAdd
+              ref={(ref: any) => setQuickAddRef(ref || {})}
               onSuccess={handleSuccess}
               onCancel={handleCancel}
               showAsFavorite={true}
@@ -93,7 +104,11 @@ export default function FoodLogScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.mobileSection}>
+          <FavoritesCarousel onSelectFood={handleFavoriteSelect} />
+        </View>
+        <View style={styles.mobileSection}>
           <QuickFoodAdd
+            ref={(ref: any) => setQuickAddRef(ref || {})}
             onSuccess={handleSuccess}
             onCancel={handleCancel}
             showAsFavorite={true}

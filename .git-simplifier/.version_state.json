@@ -1,12 +1,53 @@
 {
-  "current_version": "0.1.0-alpha.2",
+  "current_version": "0.1.0-alpha.3",
   "version_type": "alpha",
   "major": 0,
   "minor": 1,
   "patch": 0,
-  "alpha": 2,
+  "alpha": 3,
   "beta": 0,
   "history": [
+    {
+      "version": "0.1.0-alpha.3",
+      "message": "working on improving the food section to be on par with the app we're migrating from, added all options for quick/advanced food entries - fixed login bug where it doesnt redirect, added favorites to food tab/section",
+      "timestamp": "2025-08-21T18:46:16.618921+00:00",
+      "category": "Added",
+      "files_changed": [
+        {
+          "Modified": "FOOD_IMPLEMENTATION_PLAN.md"
+        },
+        {
+          "Modified": "app/(app)/food/index.tsx"
+        },
+        {
+          "Modified": "app/(auth)/login.tsx"
+        },
+        {
+          "Modified": "app/_layout.tsx"
+        },
+        {
+          "Modified": "bun.lock"
+        },
+        {
+          "Modified": "package.json"
+        },
+        {
+          "Modified": "src/components/food/QuickFoodAdd.tsx"
+        },
+        {
+          "Modified": "src/components/food/index.ts"
+        },
+        {
+          "Modified": "src/hooks/useUnifiedFoodSearch.ts"
+        },
+        {
+          "Untracked": ".git_simplifier_backups/backup_20250821_114616.json"
+        },
+        {
+          "Untracked": "src/components/food/FavoritesCarousel.tsx"
+        }
+      ]
+    },
     {
       "version": "0.1.0-alpha.2",
       "message": "working on improving the food section to be on par with the app we're migrating from, added all options for quick/advanced food entries",
