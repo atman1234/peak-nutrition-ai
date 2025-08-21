@@ -274,7 +274,7 @@ export function QuickFoodAdd({
                         <Ionicons 
                           name={value ? "heart" : "heart-outline"} 
                           size={20} 
-                          color={value ? Colors.crimson : Colors.textSecondary} 
+                          color={value ? colors.crimson : colors.textSecondary} 
                         />
                       }
                     />
