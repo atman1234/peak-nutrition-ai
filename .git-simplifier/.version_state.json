@@ -1,12 +1,32 @@
 {
-  "current_version": "0.1.0-alpha.8",
+  "current_version": "0.1.0-alpha.9",
   "version_type": "alpha",
   "major": 0,
   "minor": 1,
   "patch": 0,
-  "alpha": 8,
+  "alpha": 9,
   "beta": 0,
   "history": [
+    {
+      "version": "0.1.0-alpha.9",
+      "message": "added profile and profile edit pages",
+      "timestamp": "2025-08-21T19:42:33.654919+00:00",
+      "category": "Added",
+      "files_changed": [
+        {
+          "Modified": "FOOD_IMPLEMENTATION_PLAN.md"
+        },
+        {
+          "Modified": "app/(app)/profile/index.tsx"
+        },
+        {
+          "Untracked": ".git_simplifier_backups/backup_20250821_124233.json"
+        },
+        {
+          "Untracked": "src/components/ui/UpgradeModal.tsx"
+        }
+      ]
+    },
     {
       "version": "0.1.0-alpha.8",
       "message": "fixed food search in mobile, got usda search working in both",

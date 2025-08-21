@@ -1,6 +1,6 @@
 {
   "name": "peak-nutrition-ai",
-  "version": "0.1.0-alpha.8",
+  "version": "0.1.0-alpha.9",
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
