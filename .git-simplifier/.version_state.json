@@ -1,12 +1,38 @@
 {
-  "current_version": "0.1.0-alpha.1",
+  "current_version": "0.1.0-alpha.2",
   "version_type": "alpha",
   "major": 0,
   "minor": 1,
   "patch": 0,
-  "alpha": 1,
+  "alpha": 2,
   "beta": 0,
   "history": [
+    {
+      "version": "0.1.0-alpha.2",
+      "message": "working on improving the food section to be on par with the app we're migrating from, added all options for quick/advanced food entries",
+      "timestamp": "2025-08-21T18:11:46.445216+00:00",
+      "category": "Added",
+      "files_changed": [
+        {
+          "Modified": "app/(app)/food/index.tsx"
+        },
+        {
+          "Modified": "src/components/food/FoodAutocomplete.tsx"
+        },
+        {
+          "Modified": "src/components/food/MealTypePicker.tsx"
+        },
+        {
+          "Modified": "src/components/food/QuickFoodAdd.tsx"
+        },
+        {
+          "Untracked": ".git_simplifier_backups/backup_20250821_111146.json"
+        },
+        {
+          "Untracked": "FOOD_IMPLEMENTATION_PLAN.md"
+        }
+      ]
+    },
     {
       "version": "0.1.0-alpha.1",
       "message": "working on improving the food section to be on par with the app we're migrating from, missing tons of features",

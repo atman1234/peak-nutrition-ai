@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.2] - 2025-08-21 (Alpha)
+
+### Added | 2025-08-21 11:11:46
+
+- working on improving the food section to be on par with the app we're migrating from, added all options for quick/advanced food entries
+
+### Files Changed (6) | 2025-08-21 11:11:46
+
+- Modified: app/(app)/food/index.tsx
+- Modified: src/components/food/FoodAutocomplete.tsx
+- Modified: src/components/food/MealTypePicker.tsx
+- Modified: src/components/food/QuickFoodAdd.tsx
+- Untracked: .git_simplifier_backups/backup_20250821_111146.json
+- Untracked: FOOD_IMPLEMENTATION_PLAN.md
+
 ## [0.1.0-alpha.1] - 2025-08-21 (Alpha)
 
 ### Added | 2025-08-21 10:26:51

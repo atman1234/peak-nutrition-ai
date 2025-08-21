@@ -1,0 +1,40 @@
+{
+  "timestamp": "2025-08-21T11:11:46.191233",
+  "current_branch": "main",
+  "commit_hash": "2a25ec1cd523c1eea23f737e5f42840c869387b3",
+  "tags": [
+    "v0.1.0",
+    "v0.1.0-alpha.1"
+  ],
+  "uncommitted_changes": {
+    "staged_files": [],
+    "modified_files": [
+      {
+        "status": "M",
+        "file": "app/(app)/food/index.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/food/FoodAutocomplete.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/food/MealTypePicker.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/food/QuickFoodAdd.tsx"
+      }
+    ],
+    "untracked_files": [
+      "FOOD_IMPLEMENTATION_PLAN.md"
+    ],
+    "has_changes": true
+  },
+  "stash_count": 1,
+  "remote_branches": [
+    "origin/main"
+  ],
+  "operation_context": "increment_to_0.1.0-alpha.2",
+  "backup_id": "backup_20250821_111146"
+}

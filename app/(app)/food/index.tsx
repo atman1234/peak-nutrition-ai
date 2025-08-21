@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions, Platform } from 'react-native';
+import { View, StyleSheet, Dimensions, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { QuickFoodAdd, TodaysFoodLog } from '../../../src/components/food';
 import { useTheme, Spacing } from '../../../src/constants';
@@ -41,8 +41,15 @@ export default function FoodLogScreen() {
       gap: Spacing.lg,
       padding: Spacing.md,
     },
-    mobileContainer: {
+    mobileScrollView: {
       flex: 1,
+    },
+    mobileScrollContent: {
+      padding: Spacing.md,
+      gap: Spacing.lg,
+    },
+    mobileSection: {
+      marginBottom: Spacing.md,
     },
     leftColumn: {
       flex: Platform.OS === 'web' ? 0.4 : 1,
@@ -55,6 +62,7 @@ export default function FoodLogScreen() {
   }), [colors]);
 
   if (isTablet && Platform.OS === 'web') {
+    // Web/Tablet: Two-column layout
     return (
       <View style={styles.container}>
         <View style={styles.tabletContainer}>
@@ -76,15 +84,29 @@ export default function FoodLogScreen() {
     );
   }
 
+  // Mobile: Vertical layout with both components
   return (
     <View style={styles.container}>
-      <View style={styles.mobileContainer}>
-        <QuickFoodAdd
-          onSuccess={handleSuccess}
-          onCancel={handleCancel}
-          showAsFavorite={true}
-        />
-      </View>
+      <ScrollView 
+        style={styles.mobileScrollView}
+        contentContainerStyle={styles.mobileScrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.mobileSection}>
+          <QuickFoodAdd
+            onSuccess={handleSuccess}
+            onCancel={handleCancel}
+            showAsFavorite={true}
+          />
+        </View>
+        
+        <View style={styles.mobileSection}>
+          <TodaysFoodLog
+            onEditEntry={handleEditEntry}
+            onDeleteEntry={handleDeleteEntry}
+          />
+        </View>
+      </ScrollView>
     </View>
   );
 }

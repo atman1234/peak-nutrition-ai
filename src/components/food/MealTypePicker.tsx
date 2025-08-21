@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MealType } from '../../types/food';
-import { Colors, TextStyles, Spacing } from '../../constants';
+import { useTheme, TextStyles, Spacing } from '../../constants';
 import { Card } from '../ui';
 
 interface MealTypePickerProps {
@@ -11,44 +11,137 @@ interface MealTypePickerProps {
   error?: string;
 }
 
-const MEAL_TYPES: Array<{
-  value: MealType;
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-  description: string;
-}> = [
-  {
-    value: 'breakfast',
-    label: 'Breakfast',
-    icon: 'sunny-outline',
-    color: Colors.gold,
-    description: 'Morning meal',
-  },
-  {
-    value: 'lunch',
-    label: 'Lunch',
-    icon: 'restaurant-outline',
-    color: Colors.sage,
-    description: 'Midday meal',
-  },
-  {
-    value: 'dinner',
-    label: 'Dinner',
-    icon: 'moon-outline',
-    color: Colors.midnight,
-    description: 'Evening meal',
-  },
-  {
-    value: 'snack',
-    label: 'Snack',
-    icon: 'cafe-outline',
-    color: Colors.crimson,
-    description: 'Between meals',
-  },
-];
 
 export function MealTypePicker({ value, onChange, error }: MealTypePickerProps) {
+  const { colors } = useTheme();
+  
+  const MEAL_TYPES: Array<{
+    value: MealType;
+    label: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    color: string;
+    description: string;
+  }> = [
+    {
+      value: 'breakfast',
+      label: 'Breakfast',
+      icon: 'sunny-outline',
+      color: colors.gold,
+      description: 'Morning meal',
+    },
+    {
+      value: 'lunch',
+      label: 'Lunch',
+      icon: 'restaurant-outline',
+      color: '#8FBC8F',
+      description: 'Midday meal',
+    },
+    {
+      value: 'dinner',
+      label: 'Dinner',
+      icon: 'moon-outline',
+      color: '#2C3E50',
+      description: 'Evening meal',
+    },
+    {
+      value: 'snack',
+      label: 'Snack',
+      icon: 'cafe-outline',
+      color: '#DC143C',
+      description: 'Between meals',
+    },
+  ];
+  
+  const styles = React.useMemo(() => StyleSheet.create({
+    container: {
+      padding: Spacing.md,
+    },
+    header: {
+      marginBottom: Spacing.md,
+    },
+    title: {
+      ...TextStyles.h4,
+      color: colors.text,
+      marginBottom: Spacing.xs,
+    },
+    suggestion: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      fontWeight: '500',
+    },
+    mealGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: Spacing.sm,
+    },
+    mealOption: {
+      flex: 1,
+      minWidth: '45%',
+      alignItems: 'center',
+      padding: Spacing.md,
+      borderRadius: Spacing.borderRadius.lg,
+      borderWidth: 2,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      position: 'relative',
+    },
+    mealOptionSelected: {
+      borderColor: colors.gold,
+      backgroundColor: colors.backgroundSecondary,
+    },
+    mealOptionSuggested: {
+      borderColor: colors.textSecondary,
+      borderStyle: 'dashed',
+    },
+    iconContainer: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: Spacing.sm,
+    },
+    mealLabel: {
+      ...TextStyles.body,
+      color: colors.text,
+      fontWeight: '600',
+      marginBottom: Spacing.xs,
+      textAlign: 'center',
+    },
+    mealLabelSelected: {
+      color: colors.gold,
+    },
+    mealDescription: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+    mealDescriptionSelected: {
+      color: colors.textSecondary,
+    },
+    suggestionBadge: {
+      position: 'absolute',
+      top: Spacing.xs,
+      right: Spacing.xs,
+      backgroundColor: colors.gold,
+      paddingHorizontal: Spacing.xs,
+      paddingVertical: 2,
+      borderRadius: Spacing.borderRadius.sm,
+    },
+    suggestionBadgeText: {
+      ...TextStyles.caption,
+      color: '#FFFFFF',
+      fontSize: 10,
+      fontWeight: '600',
+    },
+    errorText: {
+      ...TextStyles.caption,
+      color: colors.error,
+      marginTop: Spacing.sm,
+      textAlign: 'center',
+    },
+  }), [colors]);
+  
   const getCurrentTimeBasedSuggestion = (): MealType => {
     const hour = new Date().getHours();
     
@@ -89,12 +182,12 @@ export function MealTypePicker({ value, onChange, error }: MealTypePickerProps) 
             >
               <View style={[
                 styles.iconContainer,
-                { backgroundColor: isSelected ? meal.color : Colors.backgroundSecondary },
+                { backgroundColor: isSelected ? meal.color : colors.backgroundSecondary },
               ]}>
                 <Ionicons
                   name={meal.icon}
                   size={24}
-                  color={isSelected ? Colors.surface : meal.color}
+                  color={isSelected ? '#FFFFFF' : meal.color}
                 />
               </View>
               
@@ -129,92 +222,3 @@ export function MealTypePicker({ value, onChange, error }: MealTypePickerProps) 
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    padding: Spacing.md,
-  },
-  header: {
-    marginBottom: Spacing.md,
-  },
-  title: {
-    ...TextStyles.h4,
-    color: Colors.text,
-    marginBottom: Spacing.xs,
-  },
-  suggestion: {
-    ...TextStyles.caption,
-    color: Colors.sage,
-    fontWeight: '500',
-  },
-  mealGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  mealOption: {
-    flex: 1,
-    minWidth: '45%',
-    alignItems: 'center',
-    padding: Spacing.md,
-    borderRadius: Spacing.borderRadius.lg,
-    borderWidth: 2,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
-    position: 'relative',
-  },
-  mealOptionSelected: {
-    borderColor: Colors.gold,
-    backgroundColor: `${Colors.gold}08`, // Very light gold tint
-  },
-  mealOptionSuggested: {
-    borderColor: Colors.sage,
-    borderStyle: 'dashed',
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.sm,
-  },
-  mealLabel: {
-    ...TextStyles.body,
-    color: Colors.text,
-    fontWeight: '600',
-    marginBottom: Spacing.xs,
-    textAlign: 'center',
-  },
-  mealLabelSelected: {
-    color: Colors.gold,
-  },
-  mealDescription: {
-    ...TextStyles.caption,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-  mealDescriptionSelected: {
-    color: Colors.textSecondary,
-  },
-  suggestionBadge: {
-    position: 'absolute',
-    top: Spacing.xs,
-    right: Spacing.xs,
-    backgroundColor: Colors.sage,
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: 2,
-    borderRadius: Spacing.borderRadius.sm,
-  },
-  suggestionBadgeText: {
-    ...TextStyles.caption,
-    color: Colors.surface,
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  errorText: {
-    ...TextStyles.caption,
-    color: Colors.crimson,
-    marginTop: Spacing.sm,
-    textAlign: 'center',
-  },
-});

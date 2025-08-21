@@ -1,15 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   TextInput,
   Modal,
+  TouchableOpacity,
   TouchableWithoutFeedback,
   FlatList,
   StyleSheet,
   Keyboard,
   Platform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useUnifiedFoodSearch, UnifiedFoodResult } from '../../hooks/useUnifiedFoodSearch';
 import { useTheme, TextStyles, Spacing } from '../../constants';
 import { LoadingSpinner } from '../ui';
@@ -37,7 +39,7 @@ export function FoodAutocomplete({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<UnifiedFoodResult[]>([]);
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
 
   const { colors } = useTheme();
   const { searchUnifiedFoods } = useUnifiedFoodSearch();
@@ -47,7 +49,13 @@ export function FoodAutocomplete({
     container: {
       position: 'relative',
     },
+    inputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
     input: {
+      flex: 1,
       ...TextStyles.body,
       borderWidth: 1,
       borderColor: colors.border,
@@ -122,43 +130,61 @@ export function FoodAutocomplete({
       color: colors.textSecondary,
       textAlign: 'center',
     },
+    searchButton: {
+      backgroundColor: colors.gold,
+      borderRadius: Spacing.borderRadius.md,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: 80,
+    },
+    searchButtonText: {
+      ...TextStyles.bodySmall,
+      color: '#FFFFFF',
+      fontWeight: '600',
+    },
+    searchHint: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      marginTop: Spacing.xs,
+      fontStyle: 'italic',
+    },
   }), [colors]);
 
-  // Debounce search term
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(value);
-    }, 500); // 500ms debounce
+  // Manual search function
+  const performSearch = useCallback(async () => {
+    if (value.length < 2) {
+      setSearchResults([]);
+      setShowSuggestions(false);
+      return;
+    }
 
-    return () => clearTimeout(timer);
-  }, [value]);
+    setIsSearching(true);
+    setShowSuggestions(true);
+    setHasSearched(true);
+    
+    try {
+      const results = await searchUnifiedFoods(value, 8);
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [value, searchUnifiedFoods]);
 
-  // Perform search when debounced term changes
-  useEffect(() => {
-    const performSearch = async () => {
-      if (debouncedSearchTerm.length < 2) {
-        setSearchResults([]);
-        setIsSearching(false);
-        return;
-      }
-
-      setIsSearching(true);
-      try {
-        const results = await searchUnifiedFoods(debouncedSearchTerm, 8);
-        setSearchResults(results);
-      } catch (error) {
-        console.error('Search error:', error);
-        setSearchResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    };
-
-    performSearch();
-  }, [debouncedSearchTerm]); // Remove searchUnifiedFoods dependency
+  // Handle Enter key press
+  const handleKeyPress = useCallback((e: any) => {
+    if (e.nativeEvent.key === 'Enter') {
+      performSearch();
+    }
+  }, [performSearch]);
 
   const handleFocus = () => {
-    if (!disabled && value.length >= 2) {
+    // Only show suggestions if we have previous results and search has been performed
+    if (!disabled && hasSearched && searchResults.length > 0) {
       setShowSuggestions(true);
     }
   };
@@ -166,12 +192,11 @@ export function FoodAutocomplete({
   const handleInputChange = (text: string) => {
     onChangeText(text);
     
-    if (text.length >= 2 && !disabled) {
-      setShowSuggestions(true);
-    } else {
-      setShowSuggestions(false);
+    // Clear results when input changes to prevent stale results
+    if (text !== value) {
       setSearchResults([]);
-      setIsSearching(false);
+      setShowSuggestions(false);
+      setHasSearched(false);
     }
   };
 
@@ -200,24 +225,40 @@ export function FoodAutocomplete({
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={[
-          styles.input,
-          error && styles.inputError,
-          disabled && styles.inputDisabled,
-        ]}
-        value={value}
-        onChangeText={handleInputChange}
-        onFocus={handleFocus}
-        placeholder={placeholder}
-        placeholderTextColor={colors.textSecondary}
-        autoFocus={autoFocus}
-        editable={!disabled}
-        autoCorrect={false}
-        autoCapitalize="none"
-        returnKeyType="search"
-        clearButtonMode={Platform.OS === 'ios' ? 'while-editing' : 'never'}
-      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={[
+            styles.input,
+            error && styles.inputError,
+            disabled && styles.inputDisabled,
+          ]}
+          value={value}
+          onChangeText={handleInputChange}
+          onFocus={handleFocus}
+          onKeyPress={handleKeyPress}
+          placeholder={placeholder}
+          placeholderTextColor={colors.textSecondary}
+          autoFocus={autoFocus}
+          editable={!disabled}
+          autoCorrect={false}
+          autoCapitalize="none"
+          returnKeyType="search"
+          onSubmitEditing={performSearch}
+          clearButtonMode={Platform.OS === 'ios' ? 'while-editing' : 'never'}
+        />
+        
+        <TouchableOpacity
+          style={styles.searchButton}
+          onPress={performSearch}
+          disabled={disabled || value.length < 2}
+        >
+          <Text style={styles.searchButtonText}>Search</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <Text style={styles.searchHint}>
+        Press Enter or click search to find foods
+      </Text>
       
       {error && (
         <Text style={styles.errorText}>{error}</Text>
@@ -241,7 +282,7 @@ export function FoodAutocomplete({
                   <>
                     <View style={styles.resultsHeader}>
                       <Text style={styles.resultsHeaderText}>
-                        {searchResults.length} results for "{debouncedSearchTerm}"
+                        {searchResults.length} results for "{value}"
                       </Text>
                     </View>
                     
@@ -258,7 +299,7 @@ export function FoodAutocomplete({
                       ListEmptyComponent={() => (
                         <View style={styles.emptyContainer}>
                           <Text style={styles.emptyText}>
-                            No foods found for "{debouncedSearchTerm}"
+                            No foods found for "{value}"
                           </Text>
                           <Text style={styles.emptySubtext}>
                             Try a different search term or check your spelling
