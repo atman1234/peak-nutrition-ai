@@ -16,7 +16,7 @@ import { useFoodLogs } from '../../hooks/useFoodLogs';
 import { useFavorites } from '../../hooks/useFavorites';
 import { usePortionHistory } from '../../hooks/usePortionHistory';
 import { MealType } from '../../types/food';
-import { Colors, TextStyles, Spacing } from '../../constants';
+import { useTheme, TextStyles, Spacing } from '../../constants';
 import { Button, Card, LoadingSpinner } from '../ui';
 import { FoodAutocomplete } from './FoodAutocomplete';
 import { PortionPicker } from './PortionPicker';
@@ -40,6 +40,7 @@ export function QuickFoodAdd({
   const [selectedFood, setSelectedFood] = useState<UnifiedFoodResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const { colors } = useTheme();
   const { addFoodLog } = useFoodLogs();
   const { addFavorite, isFavorite, canAddMoreFavorites } = useFavorites();
   const { getPortionSuggestion } = usePortionHistory();

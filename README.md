@@ -1,6 +1,19 @@
-# Calorie Tracker - React Native
+# Peak Nutrition AI
 
-A comprehensive calorie and macro tracking application built with Expo React Native, migrated from a React web application. Provides cross-platform food tracking with premium features for iOS, Android, and Web.
+<div align="center">
+
+**AI-powered nutrition & wellness tracking app built with React Native & Expo**
+
+*Features intelligent meal planning, comprehensive analytics, and cross-platform deployment*
+
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](package.json)
+[![React Native](https://img.shields.io/badge/React%20Native-0.79.5-61dafb.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-~53.0-000020.svg)](https://expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178c6.svg)](https://typescriptlang.org/)
+
+</div>
+
+A comprehensive AI-powered wellness platform built with Expo React Native, migrated from a React web application. Features intelligent nutrition tracking, advanced analytics, and cross-platform deployment for iOS, Android, and Web.
 
 ## 🎯 Project Overview
 
