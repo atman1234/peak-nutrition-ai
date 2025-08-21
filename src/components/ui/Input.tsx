@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TextInputProps,
   ViewStyle,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, TextStyles, Spacing } from '../../constants';
 
@@ -20,9 +21,13 @@ interface InputProps extends Omit<TextInputProps, 'style'> {
   onRightIconPress?: () => void;
   containerStyle?: ViewStyle;
   showPasswordToggle?: boolean;
+  enableHapticFeedback?: boolean;
+  autoFocus?: boolean;
+  onSubmitEditing?: () => void;
+  returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send' | 'previous';
 }
 
-export function Input({
+export const Input = forwardRef<TextInput, InputProps>(({
   label,
   error,
   helperText,
@@ -31,17 +36,45 @@ export function Input({
   onRightIconPress,
   containerStyle,
   showPasswordToggle = false,
+  enableHapticFeedback = true,
   secureTextEntry,
+  onFocus,
+  onBlur,
+  onSubmitEditing,
+  returnKeyType = 'done',
   ...props
-}: InputProps) {
+}, ref) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
   const isPassword = secureTextEntry || showPasswordToggle;
   const shouldShowPassword = isPassword && !isPasswordVisible;
 
-  const handlePasswordToggle = () => {
+  const handlePasswordToggle = async () => {
+    if (enableHapticFeedback) {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     setIsPasswordVisible(!isPasswordVisible);
+  };
+
+  const handleFocus = (event: any) => {
+    setIsFocused(true);
+    if (enableHapticFeedback) {
+      Haptics.selectionAsync();
+    }
+    onFocus?.(event);
+  };
+
+  const handleBlur = (event: any) => {
+    setIsFocused(false);
+    onBlur?.(event);
+  };
+
+  const handleSubmitEditing = () => {
+    if (enableHapticFeedback) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    onSubmitEditing?.();
   };
 
   const inputStyle = [
@@ -67,11 +100,15 @@ export function Input({
         )}
         
         <TextInput
+          ref={ref}
           style={inputStyle}
           placeholderTextColor={Colors.textTertiary}
           secureTextEntry={shouldShowPassword}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          onSubmitEditing={handleSubmitEditing}
+          returnKeyType={returnKeyType}
+          blurOnSubmit={returnKeyType === 'done'}
           {...props}
         />
         
@@ -109,7 +146,7 @@ export function Input({
       )}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

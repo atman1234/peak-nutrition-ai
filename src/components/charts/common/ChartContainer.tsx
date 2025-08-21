@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Dimensions, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/constants/theme';
 
 interface ChartContainerProps {
@@ -164,48 +164,51 @@ export const ChartPeriodSelector: React.FC<{
     container: {
       flexDirection: 'row',
       backgroundColor: colors.background,
-      borderRadius: 8,
-      padding: 2,
+      borderRadius: 12,
+      padding: 4,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     periodButton: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 6,
-      marginHorizontal: 2,
+      flex: 1,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 8,
+      alignItems: 'center',
     },
     periodButtonActive: {
       backgroundColor: colors.primary,
     },
     periodText: {
-      fontSize: 12,
-      fontWeight: '500',
+      fontSize: 13,
+      fontWeight: '600',
       color: colors.textSecondary,
     },
     periodTextActive: {
-      color: '#FFFFFF',
+      color: colors.card,
     },
   }), [colors]);
 
   return (
     <View style={styles.container}>
       {periods.map((period) => (
-        <View
+        <TouchableOpacity
           key={period.value}
           style={[
             styles.periodButton,
             selectedPeriod === period.value && styles.periodButtonActive,
           ]}
+          onPress={() => onPeriodChange(period.value)}
         >
           <Text
             style={[
               styles.periodText,
               selectedPeriod === period.value && styles.periodTextActive,
             ]}
-            onPress={() => onPeriodChange(period.value)}
           >
             {period.label}
           </Text>
-        </View>
+        </TouchableOpacity>
       ))}
     </View>
   );

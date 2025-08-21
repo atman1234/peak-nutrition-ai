@@ -1,10 +1,13 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { CartesianChart, Bar } from 'victory-native';
 import { useChartColors, chartFormatters } from './common/ChartTheme';
-import { ChartContainer, ChartEmptyState } from './common/ChartContainer';
+import { ChartEmptyState } from './common/ChartContainer';
 import { useHistoricalAnalytics } from '@/hooks/useHistoricalAnalytics';
 import { useTheme } from '@/constants/theme';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 
 interface ComparativeChartProps {
@@ -108,8 +111,6 @@ export const ComparativeChart: React.FC<ComparativeChartProps> = ({
     ];
   }, [currentPeriodLogs, previousPeriodLogs, currentLoading, previousLoading, comparisonType, metricType]);
 
-  const isEmpty = chartData.length === 0 || chartData.every(d => d.value === 0);
-  
   const getTitle = () => {
     const periodLabel = comparisonType === 'week' ? 'Weekly' : 'Monthly';
     const metricLabel = metricType === 'calories' ? 'Calories' : 
@@ -117,51 +118,141 @@ export const ComparativeChart: React.FC<ComparativeChartProps> = ({
     return `${periodLabel} ${metricLabel} Comparison`;
   };
 
-  if (isEmpty) {
-    return (
-      <ChartContainer
-        title={getTitle()}
-        subtitle="Current vs Previous Period"
-        height={height}
-      >
-        <ChartEmptyState message="Not enough data for period comparison" />
-      </ChartContainer>
-    );
-  }
-
   const styles = StyleSheet.create({
+    container: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      marginHorizontal: 4,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 4,
+      overflow: 'hidden',
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingTop: 20,
+      paddingBottom: 12,
+    },
+    titleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    titleIcon: {
+      marginRight: 8,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    targetSummary: {
+      paddingHorizontal: 20,
+      paddingBottom: 16,
+    },
+    targetText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      fontWeight: '500',
+    },
     chartWrapper: {
       paddingHorizontal: 16,
+      paddingVertical: 10,
     },
-    summaryContainer: {
+    analyticsGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 16,
+      gap: 12,
+    },
+    analyticsCard: {
+      flex: 1,
+      minWidth: '45%',
+      backgroundColor: colors.background + '60',
+      borderRadius: 12,
+      padding: 16,
       alignItems: 'center',
-      paddingVertical: 12,
-      borderTopWidth: 1,
-      borderTopColor: colors.border,
+      borderWidth: 1,
+      borderColor: colors.border + '20',
     },
-    summaryLabel: {
+    analyticsValue: {
+      fontSize: 20,
+      fontWeight: '800',
+      marginBottom: 4,
+      color: colors.text,
+    },
+    analyticsLabel: {
       fontSize: 12,
-      color: colors.textSecondary,
-    },
-    summaryValue: {
-      fontSize: 18,
       fontWeight: '600',
-      color: chartData[1]?.value > chartData[0]?.value ? chartColors.calories.medium : chartColors.calories.high,
+      textAlign: 'center',
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    analyticsSubtext: {
+      fontSize: 10,
+      color: colors.textSecondary,
+      marginTop: 2,
+      textAlign: 'center',
     },
   });
+
+  const isEmpty = chartData.length === 0 || chartData.every(d => d.value === 0);
+
+  if (isEmpty) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.titleContainer}>
+            <MaterialCommunityIcons 
+              name="compare" 
+              size={20} 
+              color={colors.primary} 
+              style={styles.titleIcon}
+            />
+            <View>
+              <Text style={styles.title}>{getTitle()}</Text>
+            </View>
+          </View>
+        </View>
+        <ChartEmptyState message="Not enough data for period comparison" />
+      </View>
+    );
+  }
 
   const percentageChange = chartData[0]?.value > 0 
     ? Math.round(((chartData[1]?.value - chartData[0]?.value) / chartData[0]?.value) * 100) 
     : 0;
 
   return (
-    <ChartContainer
-      title={getTitle()}
-      subtitle="Current vs Previous Period"
-      height={height}
-      noPadding={false}
-    >
-      <View style={styles.chartWrapper}>
+    <View style={styles.container}>
+      {/* Header - Title Only */}
+      <View style={styles.header}>
+        <View style={styles.titleContainer}>
+          <MaterialCommunityIcons 
+            name="compare" 
+            size={20} 
+            color={colors.primary} 
+            style={styles.titleIcon}
+          />
+          <View>
+            <Text style={styles.title}>{getTitle()}</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Target Summary */}
+      <View style={styles.targetSummary}>
+        <Text style={styles.targetText}>Current vs Previous Period</Text>
+      </View>
+
+      {/* Chart */}
+      <View style={[styles.chartWrapper, { height: 280 }]}>
         <CartesianChart
           data={chartData}
           xKey="period"
@@ -180,13 +271,35 @@ export const ComparativeChart: React.FC<ComparativeChartProps> = ({
         </CartesianChart>
       </View>
       
-      {/* Summary Stats */}
-      <View style={styles.summaryContainer}>
-        <Text style={styles.summaryLabel}>Change from Previous Period</Text>
-        <Text style={styles.summaryValue}>
-          {percentageChange > 0 ? '+' : ''}{percentageChange}%
-        </Text>
+      {/* Analytics Grid */}
+      <View style={styles.analyticsGrid}>
+        <View style={styles.analyticsCard}>
+          <Text style={[
+            styles.analyticsValue,
+            { color: percentageChange > 0 ? chartColors.calories.medium : percentageChange < 0 ? chartColors.calories.high : colors.text }
+          ]}>
+            {percentageChange > 0 ? '+' : ''}{percentageChange}%
+          </Text>
+          <Text style={styles.analyticsLabel}>Change</Text>
+          <Text style={styles.analyticsSubtext}>From Previous Period</Text>
+        </View>
+        
+        <View style={styles.analyticsCard}>
+          <Text style={styles.analyticsValue}>
+            {chartData[1]?.value || 0}
+          </Text>
+          <Text style={styles.analyticsLabel}>Current</Text>
+          <Text style={styles.analyticsSubtext}>{comparisonType === 'week' ? 'This Week' : 'This Month'}</Text>
+        </View>
+        
+        <View style={styles.analyticsCard}>
+          <Text style={styles.analyticsValue}>
+            {chartData[0]?.value || 0}
+          </Text>
+          <Text style={styles.analyticsLabel}>Previous</Text>
+          <Text style={styles.analyticsSubtext}>{comparisonType === 'week' ? 'Last Week' : 'Last Month'}</Text>
+        </View>
       </View>
-    </ChartContainer>
+    </View>
   );
 };

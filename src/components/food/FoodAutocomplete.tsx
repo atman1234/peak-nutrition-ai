@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { useUnifiedFoodSearch, UnifiedFoodResult } from '../../hooks/useUnifiedFoodSearch';
-import { Colors, TextStyles, Spacing } from '../../constants';
+import { useTheme, TextStyles, Spacing } from '../../constants';
 import { LoadingSpinner } from '../ui';
 import { FoodSearchItem } from './FoodSearchItem';
 
@@ -39,7 +39,90 @@ export function FoodAutocomplete({
   const [searchResults, setSearchResults] = useState<UnifiedFoodResult[]>([]);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
+  const { colors } = useTheme();
   const { searchUnifiedFoods } = useUnifiedFoodSearch();
+
+  // Create dynamic styles based on theme
+  const styles = React.useMemo(() => StyleSheet.create({
+    container: {
+      position: 'relative',
+    },
+    input: {
+      ...TextStyles.body,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: Spacing.borderRadius.md,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      backgroundColor: colors.surface,
+      color: colors.text,
+      fontSize: 16, // Prevent zoom on iOS
+    },
+    inputError: {
+      borderColor: colors.error,
+    },
+    inputDisabled: {
+      backgroundColor: colors.backgroundSecondary,
+      color: colors.textSecondary,
+    },
+    errorText: {
+      ...TextStyles.caption,
+      color: colors.error,
+      marginTop: Spacing.xs,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      justifyContent: 'center',
+      paddingHorizontal: Spacing.md,
+    },
+    suggestionsContainer: {
+      backgroundColor: colors.surface,
+      borderRadius: Spacing.borderRadius.lg,
+      maxHeight: '70%',
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 8,
+    },
+    loadingContainer: {
+      padding: Spacing.xl,
+      alignItems: 'center',
+    },
+    resultsHeader: {
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.backgroundSecondary,
+      borderTopLeftRadius: Spacing.borderRadius.lg,
+      borderTopRightRadius: Spacing.borderRadius.lg,
+    },
+    resultsHeaderText: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    resultsList: {
+      flex: 1,
+    },
+    emptyContainer: {
+      padding: Spacing.xl,
+      alignItems: 'center',
+    },
+    emptyText: {
+      ...TextStyles.body,
+      color: colors.text,
+      textAlign: 'center',
+      marginBottom: Spacing.sm,
+    },
+    emptySubtext: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+  }), [colors]);
 
   // Debounce search term
   useEffect(() => {
@@ -127,7 +210,7 @@ export function FoodAutocomplete({
         onChangeText={handleInputChange}
         onFocus={handleFocus}
         placeholder={placeholder}
-        placeholderTextColor={Colors.textSecondary}
+        placeholderTextColor={colors.textSecondary}
         autoFocus={autoFocus}
         editable={!disabled}
         autoCorrect={false}
@@ -194,83 +277,3 @@ export function FoodAutocomplete({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-  },
-  input: {
-    ...TextStyles.body,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Spacing.borderRadius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    backgroundColor: Colors.surface,
-    color: Colors.text,
-    fontSize: 16, // Prevent zoom on iOS
-  },
-  inputError: {
-    borderColor: Colors.crimson,
-  },
-  inputDisabled: {
-    backgroundColor: Colors.backgroundSecondary,
-    color: Colors.textSecondary,
-  },
-  errorText: {
-    ...TextStyles.caption,
-    color: Colors.crimson,
-    marginTop: Spacing.xs,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.md,
-  },
-  suggestionsContainer: {
-    backgroundColor: Colors.surface,
-    borderRadius: Spacing.borderRadius.lg,
-    maxHeight: '70%',
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  loadingContainer: {
-    padding: Spacing.xl,
-    alignItems: 'center',
-  },
-  resultsHeader: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    backgroundColor: Colors.backgroundSecondary,
-    borderTopLeftRadius: Spacing.borderRadius.lg,
-    borderTopRightRadius: Spacing.borderRadius.lg,
-  },
-  resultsHeaderText: {
-    ...TextStyles.caption,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-  },
-  resultsList: {
-    flex: 1,
-  },
-  emptyContainer: {
-    padding: Spacing.xl,
-    alignItems: 'center',
-  },
-  emptyText: {
-    ...TextStyles.body,
-    color: Colors.text,
-    textAlign: 'center',
-    marginBottom: Spacing.sm,
-  },
-  emptySubtext: {
-    ...TextStyles.caption,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-});

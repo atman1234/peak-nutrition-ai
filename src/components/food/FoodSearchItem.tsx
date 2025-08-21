@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { UnifiedFoodResult } from '../../hooks/useUnifiedFoodSearch';
-import { Colors, TextStyles, Spacing } from '../../constants';
+import { useTheme, TextStyles, Spacing } from '../../constants';
 
 interface FoodSearchItemProps {
   food: UnifiedFoodResult;
@@ -10,6 +10,91 @@ interface FoodSearchItemProps {
 }
 
 export function FoodSearchItem({ food, onPress }: FoodSearchItemProps) {
+  const { colors } = useTheme();
+
+  // Create dynamic styles based on theme
+  const styles = React.useMemo(() => StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    favoriteContainer: {
+      backgroundColor: `${colors.crimson}08`, // Very light red tint
+    },
+    content: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: Spacing.xs,
+    },
+    name: {
+      ...TextStyles.body,
+      color: colors.text,
+      fontWeight: '600',
+      flex: 1,
+      marginRight: Spacing.sm,
+    },
+    badges: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
+    },
+    favoriteIcon: {
+      marginRight: Spacing.xs,
+    },
+    brand: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      marginBottom: Spacing.xs,
+      fontStyle: 'italic',
+    },
+    nutrition: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: Spacing.xs,
+      flexWrap: 'wrap',
+    },
+    nutritionText: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      fontSize: 12,
+    },
+    nutritionDivider: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      marginHorizontal: Spacing.xs,
+      fontSize: 12,
+    },
+    footer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    sourceLabel: {
+      ...TextStyles.caption,
+      color: colors.sage,
+      fontSize: 11,
+      fontWeight: '600',
+      textTransform: 'uppercase',
+    },
+    confidence: {
+      ...TextStyles.caption,
+      color: colors.gold,
+      fontSize: 11,
+      fontWeight: '600',
+    },
+    chevron: {
+      marginLeft: Spacing.sm,
+    },
+  }), [colors]);
   const getSourceIcon = () => {
     switch (food.source) {
       case 'usda':
@@ -26,13 +111,13 @@ export function FoodSearchItem({ food, onPress }: FoodSearchItemProps) {
   const getSourceColor = () => {
     switch (food.source) {
       case 'usda':
-        return Colors.sage;
+        return colors.sage;
       case 'verified':
-        return Colors.gold;
+        return colors.gold;
       case 'ai_estimate':
-        return Colors.crimson;
+        return colors.crimson;
       default:
-        return Colors.textSecondary;
+        return colors.textSecondary;
     }
   };
 
@@ -71,7 +156,7 @@ export function FoodSearchItem({ food, onPress }: FoodSearchItemProps) {
               <Ionicons 
                 name="heart" 
                 size={16} 
-                color={Colors.crimson} 
+                color={colors.crimson} 
                 style={styles.favoriteIcon}
               />
             )}
@@ -124,92 +209,10 @@ export function FoodSearchItem({ food, onPress }: FoodSearchItemProps) {
       <Ionicons
         name="chevron-forward"
         size={20}
-        color={Colors.textSecondary}
+        color={colors.textSecondary}
         style={styles.chevron}
       />
     </TouchableOpacity>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    backgroundColor: Colors.surface,
-  },
-  favoriteContainer: {
-    backgroundColor: `${Colors.crimson}08`, // Very light red tint
-  },
-  content: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.xs,
-  },
-  name: {
-    ...TextStyles.body,
-    color: Colors.text,
-    fontWeight: '600',
-    flex: 1,
-    marginRight: Spacing.sm,
-  },
-  badges: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  favoriteIcon: {
-    marginRight: Spacing.xs,
-  },
-  brand: {
-    ...TextStyles.caption,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-    fontStyle: 'italic',
-  },
-  nutrition: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.xs,
-    flexWrap: 'wrap',
-  },
-  nutritionText: {
-    ...TextStyles.caption,
-    color: Colors.textSecondary,
-    fontSize: 12,
-  },
-  nutritionDivider: {
-    ...TextStyles.caption,
-    color: Colors.textSecondary,
-    marginHorizontal: Spacing.xs,
-    fontSize: 12,
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sourceLabel: {
-    ...TextStyles.caption,
-    color: Colors.sage,
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  confidence: {
-    ...TextStyles.caption,
-    color: Colors.gold,
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  chevron: {
-    marginLeft: Spacing.sm,
-  },
-});
