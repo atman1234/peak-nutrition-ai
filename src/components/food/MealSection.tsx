@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MealType } from '../../types/food';
 import type { Tables } from '../../types/supabase';
-import { Colors, TextStyles, Spacing } from '../../constants';
+import { useTheme, TextStyles, Spacing } from '../../constants';
 import { Card } from '../ui';
 import { FoodLogEntry } from './FoodLogEntry';
 
@@ -35,6 +35,7 @@ export function MealSection({
   onDeleteEntry,
 }: MealSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const { colors } = useTheme();
 
   const getMealDisplayName = (meal: MealType) => {
     return meal.charAt(0).toUpperCase() + meal.slice(1);
@@ -43,6 +44,85 @@ export function MealSection({
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
   };
+
+  const styles = React.useMemo(() => StyleSheet.create({
+    container: {
+      overflow: 'hidden',
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: Spacing.md,
+      backgroundColor: colors.surface,
+    },
+    headerLeft: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    iconContainer: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: Spacing.md,
+    },
+    mealInfo: {
+      flex: 1,
+    },
+    mealName: {
+      ...TextStyles.body,
+      color: colors.text,
+      fontWeight: '600',
+      marginBottom: Spacing.xs,
+    },
+    mealStats: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+    },
+    headerRight: {
+      alignItems: 'flex-end',
+      gap: Spacing.xs,
+    },
+    nutritionSummary: {
+      alignItems: 'flex-end',
+    },
+    proteinText: {
+      ...TextStyles.caption,
+      color: colors.sage,
+      fontWeight: '600',
+    },
+    content: {
+      backgroundColor: colors.backgroundSecondary,
+    },
+    macroBreakdown: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      paddingVertical: Spacing.md,
+      paddingHorizontal: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    macroItem: {
+      alignItems: 'center',
+    },
+    macroValue: {
+      ...TextStyles.body,
+      color: colors.text,
+      fontWeight: '700',
+      marginBottom: Spacing.xs,
+    },
+    macroLabel: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      fontSize: 11,
+    },
+    foodsList: {
+      paddingVertical: Spacing.sm,
+    },
+  }), [colors]);
 
   return (
     <Card style={styles.container}>
@@ -56,7 +136,7 @@ export function MealSection({
             <Ionicons
               name={icon}
               size={20}
-              color={Colors.surface}
+              color={colors.surface}
             />
           </View>
           
@@ -80,7 +160,7 @@ export function MealSection({
           <Ionicons
             name={isExpanded ? "chevron-up" : "chevron-down"}
             size={20}
-            color={Colors.textSecondary}
+            color={colors.textSecondary}
           />
         </View>
       </TouchableOpacity>
@@ -120,82 +200,3 @@ export function MealSection({
     </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    overflow: 'hidden',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: Spacing.md,
-    backgroundColor: Colors.surface,
-  },
-  headerLeft: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
-  mealInfo: {
-    flex: 1,
-  },
-  mealName: {
-    ...TextStyles.body,
-    color: Colors.text,
-    fontWeight: '600',
-    marginBottom: Spacing.xs,
-  },
-  mealStats: {
-    ...TextStyles.caption,
-    color: Colors.textSecondary,
-  },
-  headerRight: {
-    alignItems: 'flex-end',
-    gap: Spacing.xs,
-  },
-  nutritionSummary: {
-    alignItems: 'flex-end',
-  },
-  proteinText: {
-    ...TextStyles.caption,
-    color: Colors.sage,
-    fontWeight: '600',
-  },
-  content: {
-    backgroundColor: Colors.backgroundSecondary,
-  },
-  macroBreakdown: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  macroItem: {
-    alignItems: 'center',
-  },
-  macroValue: {
-    ...TextStyles.body,
-    color: Colors.text,
-    fontWeight: '700',
-    marginBottom: Spacing.xs,
-  },
-  macroLabel: {
-    ...TextStyles.caption,
-    color: Colors.textSecondary,
-    fontSize: 11,
-  },
-  foodsList: {
-    paddingVertical: Spacing.sm,
-  },
-});

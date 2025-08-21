@@ -21,6 +21,61 @@ export function TodaysFoodLog({
 
   const mealOrder: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
+  // Create styles with dynamic colors
+  const styles = React.useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: Spacing.xl,
+    },
+    header: {
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    title: {
+      ...TextStyles.h3,
+      color: colors.text,
+      marginBottom: Spacing.xs,
+    },
+    totalNutrition: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    totalText: {
+      ...TextStyles.body,
+      color: colors.textSecondary,
+      fontSize: 14,
+    },
+    listContent: {
+      padding: Spacing.md,
+      gap: Spacing.md,
+    },
+    emptyContainer: {
+      margin: Spacing.md,
+      padding: Spacing.xl,
+      alignItems: 'center',
+    },
+    emptyTitle: {
+      ...TextStyles.h4,
+      color: colors.text,
+      marginBottom: Spacing.sm,
+      textAlign: 'center',
+    },
+    emptySubtitle: {
+      ...TextStyles.body,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+  }), [colors]);
+
   const getMealIcon = (mealType: MealType) => {
     switch (mealType) {
       case 'breakfast': return 'sunny-outline';
@@ -89,61 +144,6 @@ export function TodaysFoodLog({
       />
     );
   };
-
-  // Create styles with dynamic colors
-  const styles = React.useMemo(() => StyleSheet.create({
-    container: {
-      flex: 1,
-    },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: Spacing.xl,
-    },
-    header: {
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
-    },
-    title: {
-      ...TextStyles.h3,
-      color: colors.text,
-      marginBottom: Spacing.xs,
-    },
-    totalNutrition: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    totalText: {
-      ...TextStyles.body,
-      color: colors.textSecondary,
-      fontSize: 14,
-    },
-    listContent: {
-      padding: Spacing.md,
-      gap: Spacing.md,
-    },
-    emptyContainer: {
-      margin: Spacing.md,
-      padding: Spacing.xl,
-      alignItems: 'center',
-    },
-    emptyTitle: {
-      ...TextStyles.h4,
-      color: colors.text,
-      marginBottom: Spacing.sm,
-      textAlign: 'center',
-    },
-    emptySubtitle: {
-      ...TextStyles.body,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      lineHeight: 20,
-    },
-  }), [colors]);
 
   return (
     <View style={styles.container}>

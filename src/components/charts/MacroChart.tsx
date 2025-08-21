@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Dimensions, TouchableOpacity, Text, StyleSheet, ScrollView } from 'react-native';
 import { PolarChart, Pie, Bar, CartesianChart } from 'victory-native';
-import { format, startOfDay } from 'date-fns';
+import { format, startOfDay, sub } from 'date-fns';
 import { useChartColors, chartFormatters } from './common/ChartTheme';
 import { ChartContainer, ChartLegend, ChartEmptyState } from './common/ChartContainer';
 import { useFoodLogs } from '@/hooks/useFoodLogs';
@@ -35,121 +35,7 @@ export const MacroChart: React.FC<MacroChartProps> = ({
   // Use food logs directly like the original app
   const { dailySummary, isLoading } = useFoodLogs(dateString);
 
-  // Calculate macro data with targets for the selected date
-  const macroData = useMemo(() => {
-    if (isLoading || !dailySummary) {
-      return {
-        actual: { protein: 0, carbs: 0, fat: 0, calories: 0 },
-        targets: { protein: 0, carbs: 0, fat: 0 },
-        percentages: { protein: 0, carbs: 0, fat: 0 },
-      };
-    }
-
-    const actual = {
-      protein: Math.round(dailySummary.totalProtein),
-      carbs: Math.round(dailySummary.totalCarbs),
-      fat: Math.round(dailySummary.totalFat),
-      calories: Math.round(dailySummary.totalCalories),
-    };
-
-    const targets = {
-      protein: profile?.protein_target_g || Math.round(((profile?.daily_calorie_target || 2000) * 0.25) / 4),
-      carbs: profile?.carb_target_g || Math.round(((profile?.daily_calorie_target || 2000) * 0.50) / 4),
-      fat: profile?.fat_target_g || Math.round(((profile?.daily_calorie_target || 2000) * 0.25) / 9),
-    };
-
-    const percentages = {
-      protein: targets.protein > 0 ? Math.round((actual.protein / targets.protein) * 100) : 0,
-      carbs: targets.carbs > 0 ? Math.round((actual.carbs / targets.carbs) * 100) : 0,
-      fat: targets.fat > 0 ? Math.round((actual.fat / targets.fat) * 100) : 0,
-    };
-
-    return { actual, targets, percentages };
-  }, [dailySummary, isLoading, profile]);
-
-  // Prepare chart data for both pie and bar charts
-  const { pieData, barData } = useMemo(() => {
-    const { actual, targets, percentages } = macroData;
-    const total = (actual.protein * 4) + (actual.carbs * 4) + (actual.fat * 9);
-    
-    const pieData = total === 0 ? [] : [
-      {
-        label: 'Protein',
-        value: actual.protein * 4,
-        grams: actual.protein,
-        percentage: Math.round((actual.protein * 4) / total * 100),
-        color: chartColors.macros.protein,
-      },
-      {
-        label: 'Carbs',
-        value: actual.carbs * 4,
-        grams: actual.carbs,
-        percentage: Math.round((actual.carbs * 4) / total * 100),
-        color: chartColors.macros.carbs,
-      },
-      {
-        label: 'Fat',
-        value: actual.fat * 9,
-        grams: actual.fat,
-        percentage: Math.round((actual.fat * 9) / total * 100),
-        color: chartColors.macros.fat,
-      },
-    ].filter(item => item.value > 0);
-
-    const barData = [
-      {
-        macro: 'Protein',
-        actual: actual.protein,
-        target: targets.protein,
-        percentage: percentages.protein,
-        color: chartColors.macros.protein,
-      },
-      {
-        macro: 'Carbs', 
-        actual: actual.carbs,
-        target: targets.carbs,
-        percentage: percentages.carbs,
-        color: chartColors.macros.carbs,
-      },
-      {
-        macro: 'Fat',
-        actual: actual.fat,
-        target: targets.fat,
-        percentage: percentages.fat,
-        color: chartColors.macros.fat,
-      },
-    ];
-
-    return { pieData, barData };
-  }, [macroData, chartColors]);
-
-  const isEmpty = macroData.actual.protein === 0 && 
-                  macroData.actual.carbs === 0 && 
-                  macroData.actual.fat === 0;
-
-  if (isEmpty) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.titleContainer}>
-            <MaterialCommunityIcons 
-              name="chart-donut" 
-              size={20} 
-              color={colors.primary} 
-              style={styles.titleIcon}
-            />
-            <View>
-              <Text style={styles.title}>Macro Distribution</Text>
-              <Text style={styles.subtitle}>{format(date, 'MMMM dd, yyyy')}</Text>
-            </View>
-          </View>
-        </View>
-        <ChartEmptyState message="No macro data available for this date" />
-      </View>
-    );
-  }
-
-  const styles = StyleSheet.create({
+const styles = StyleSheet.create({
     container: {
       backgroundColor: colors.card,
       borderRadius: 16,
@@ -179,6 +65,12 @@ export const MacroChart: React.FC<MacroChartProps> = ({
       fontSize: 18,
       fontWeight: '700',
       color: colors.text,
+    },
+    subtitle: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      fontWeight: '500',
+      marginBottom: 12,
     },
     targetSummary: {
       paddingHorizontal: 20,
@@ -554,6 +446,122 @@ export const MacroChart: React.FC<MacroChartProps> = ({
     },
   });
 
+
+  // Calculate macro data with targets for the selected date
+  const macroData = useMemo(() => {
+    if (isLoading || !dailySummary) {
+      return {
+        actual: { protein: 0, carbs: 0, fat: 0, calories: 0 },
+        targets: { protein: 0, carbs: 0, fat: 0 },
+        percentages: { protein: 0, carbs: 0, fat: 0 },
+      };
+    }
+
+    const actual = {
+      protein: Math.round(dailySummary.totalProtein),
+      carbs: Math.round(dailySummary.totalCarbs),
+      fat: Math.round(dailySummary.totalFat),
+      calories: Math.round(dailySummary.totalCalories),
+    };
+
+    const targets = {
+      protein: profile?.protein_target_g || Math.round(((profile?.daily_calorie_target || 2000) * 0.25) / 4),
+      carbs: profile?.carb_target_g || Math.round(((profile?.daily_calorie_target || 2000) * 0.50) / 4),
+      fat: profile?.fat_target_g || Math.round(((profile?.daily_calorie_target || 2000) * 0.25) / 9),
+    };
+
+    const percentages = {
+      protein: targets.protein > 0 ? Math.round((actual.protein / targets.protein) * 100) : 0,
+      carbs: targets.carbs > 0 ? Math.round((actual.carbs / targets.carbs) * 100) : 0,
+      fat: targets.fat > 0 ? Math.round((actual.fat / targets.fat) * 100) : 0,
+    };
+
+    return { actual, targets, percentages };
+  }, [dailySummary, isLoading, profile]);
+
+  // Prepare chart data for both pie and bar charts
+  const { pieData, barData } = useMemo(() => {
+    const { actual, targets, percentages } = macroData;
+    const total = (actual.protein * 4) + (actual.carbs * 4) + (actual.fat * 9);
+    
+    const pieData = total === 0 ? [] : [
+      {
+        label: 'Protein',
+        value: actual.protein * 4,
+        grams: actual.protein,
+        percentage: Math.round((actual.protein * 4) / total * 100),
+        color: chartColors.macros.protein,
+      },
+      {
+        label: 'Carbs',
+        value: actual.carbs * 4,
+        grams: actual.carbs,
+        percentage: Math.round((actual.carbs * 4) / total * 100),
+        color: chartColors.macros.carbs,
+      },
+      {
+        label: 'Fat',
+        value: actual.fat * 9,
+        grams: actual.fat,
+        percentage: Math.round((actual.fat * 9) / total * 100),
+        color: chartColors.macros.fat,
+      },
+    ].filter(item => item.value > 0);
+
+    const barData = [
+      {
+        macro: 'Protein',
+        actual: actual.protein,
+        target: targets.protein,
+        percentage: percentages.protein,
+        color: chartColors.macros.protein,
+      },
+      {
+        macro: 'Carbs', 
+        actual: actual.carbs,
+        target: targets.carbs,
+        percentage: percentages.carbs,
+        color: chartColors.macros.carbs,
+      },
+      {
+        macro: 'Fat',
+        actual: actual.fat,
+        target: targets.fat,
+        percentage: percentages.fat,
+        color: chartColors.macros.fat,
+      },
+    ];
+
+    return { pieData, barData };
+  }, [macroData, chartColors]);
+
+  const isEmpty = macroData.actual.protein === 0 && 
+                  macroData.actual.carbs === 0 && 
+                  macroData.actual.fat === 0;
+
+  if (isEmpty) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.titleContainer}>
+            <MaterialCommunityIcons 
+              name="chart-donut" 
+              size={20} 
+              color={colors.primary} 
+              style={styles.titleIcon}
+            />
+            <View>
+              <Text style={styles.title}>Macro Distribution</Text>
+              <Text style={styles.subtitle}>{format(date, 'MMMM dd, yyyy')}</Text>
+            </View>
+          </View>
+        </View>
+        <ChartEmptyState message="No macro data available for this date" />
+      </View>
+    );
+  }
+
+  
   const chartWidth = Math.min(screenWidth - 64, 280);
 
   return (

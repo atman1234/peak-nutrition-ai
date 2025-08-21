@@ -1,0 +1,55 @@
+{
+  "timestamp": "2025-08-21T10:26:51.262697",
+  "current_branch": "main",
+  "commit_hash": "dec8f76c1a21945a86b0e75ec751679c637e518b",
+  "tags": [
+    "v0.1.0"
+  ],
+  "uncommitted_changes": {
+    "staged_files": [],
+    "modified_files": [
+      {
+        "status": "M",
+        "file": "src/components/charts/MacroChart.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/food/FoodLogEntry.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/food/MealSection.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/food/QuickFoodAdd.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/food/TodaysFoodLog.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/ui/Button.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/ui/Card.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/ui/StatCard.tsx"
+      }
+    ],
+    "untracked_files": [
+      ".git-simplifier/.version_state.json"
+    ],
+    "has_changes": true
+  },
+  "stash_count": 1,
+  "remote_branches": [
+    "origin/main"
+  ],
+  "operation_context": "increment_to_0.1.0-alpha.1",
+  "backup_id": "backup_20250821_102651"
+}

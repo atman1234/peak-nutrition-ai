@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Tables } from '../../types/supabase';
-import { Colors, TextStyles, Spacing } from '../../constants';
+import { useTheme, TextStyles, Spacing } from '../../constants';
 
 type FoodLog = Tables<'food_logs'>;
 
@@ -20,6 +20,8 @@ interface FoodLogEntryProps {
 }
 
 export function FoodLogEntry({ food, onEdit, onDelete, isLast = false }: FoodLogEntryProps) {
+  const { colors } = useTheme();
+  
   const formatTime = (dateString: string | null) => {
     if (!dateString) return 'Unknown time';
     const date = new Date(dateString);
@@ -42,6 +44,99 @@ export function FoodLogEntry({ food, onEdit, onDelete, isLast = false }: FoodLog
       ]
     );
   };
+
+  const styles = React.useMemo(() => StyleSheet.create({
+    container: {
+      position: 'relative',
+      backgroundColor: colors.surface,
+    },
+    containerWithBorder: {
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    content: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      backgroundColor: colors.surface,
+      minHeight: 72,
+    },
+    foodInfo: {
+      flex: 1,
+      marginRight: Spacing.sm,
+    },
+    foodName: {
+      ...TextStyles.body,
+      color: colors.text,
+      fontWeight: '600',
+      marginBottom: Spacing.xs,
+    },
+    brandName: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      fontStyle: 'italic',
+      marginBottom: Spacing.xs,
+    },
+    portionInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    portionText: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    timeDivider: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      marginHorizontal: Spacing.xs,
+    },
+    timeText: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+    },
+    nutritionInfo: {
+      alignItems: 'flex-end',
+      minWidth: 80,
+    },
+    caloriesText: {
+      ...TextStyles.body,
+      color: colors.text,
+      fontWeight: '700',
+      fontSize: 18,
+    },
+    caloriesLabel: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      marginBottom: Spacing.xs,
+    },
+    macrosRow: {
+      flexDirection: 'row',
+      gap: Spacing.xs,
+    },
+    macroText: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      fontSize: 10,
+    },
+    actionButtonsInline: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+      marginLeft: Spacing.sm,
+    },
+    editButtonInline: {
+      padding: Spacing.sm,
+      borderRadius: Spacing.borderRadius.sm,
+      backgroundColor: `${colors.gold}20`,
+    },
+    deleteButtonInline: {
+      padding: Spacing.sm,
+      borderRadius: Spacing.borderRadius.sm,
+      backgroundColor: `${colors.crimson}20`,
+    },
+  }), [colors]);
 
   return (
     <View style={[styles.container, !isLast && styles.containerWithBorder]}>
@@ -92,12 +187,12 @@ export function FoodLogEntry({ food, onEdit, onDelete, isLast = false }: FoodLog
           <View style={styles.actionButtonsInline}>
             {onEdit && (
               <TouchableOpacity style={styles.editButtonInline} onPress={onEdit}>
-                <Ionicons name="pencil" size={16} color={Colors.gold} />
+                <Ionicons name="pencil" size={16} color={colors.gold} />
               </TouchableOpacity>
             )}
             {onDelete && (
               <TouchableOpacity style={styles.deleteButtonInline} onPress={handleDelete}>
-                <Ionicons name="trash" size={16} color={Colors.crimson} />
+                <Ionicons name="trash" size={16} color={colors.crimson} />
               </TouchableOpacity>
             )}
           </View>
@@ -108,95 +203,3 @@ export function FoodLogEntry({ food, onEdit, onDelete, isLast = false }: FoodLog
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-    backgroundColor: Colors.surface,
-  },
-  containerWithBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  content: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    backgroundColor: Colors.surface,
-    minHeight: 72,
-  },
-  foodInfo: {
-    flex: 1,
-    marginRight: Spacing.sm,
-  },
-  foodName: {
-    ...TextStyles.body,
-    color: Colors.text,
-    fontWeight: '600',
-    marginBottom: Spacing.xs,
-  },
-  brandName: {
-    ...TextStyles.caption,
-    color: Colors.textSecondary,
-    fontStyle: 'italic',
-    marginBottom: Spacing.xs,
-  },
-  portionInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  portionText: {
-    ...TextStyles.caption,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-  },
-  timeDivider: {
-    ...TextStyles.caption,
-    color: Colors.textSecondary,
-    marginHorizontal: Spacing.xs,
-  },
-  timeText: {
-    ...TextStyles.caption,
-    color: Colors.textSecondary,
-  },
-  nutritionInfo: {
-    alignItems: 'flex-end',
-    minWidth: 80,
-  },
-  caloriesText: {
-    ...TextStyles.body,
-    color: Colors.text,
-    fontWeight: '700',
-    fontSize: 18,
-  },
-  caloriesLabel: {
-    ...TextStyles.caption,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-  },
-  macrosRow: {
-    flexDirection: 'row',
-    gap: Spacing.xs,
-  },
-  macroText: {
-    ...TextStyles.caption,
-    color: Colors.textSecondary,
-    fontSize: 10,
-  },
-  actionButtonsInline: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginLeft: Spacing.sm,
-  },
-  editButtonInline: {
-    padding: Spacing.sm,
-    borderRadius: Spacing.borderRadius.sm,
-    backgroundColor: `${Colors.gold}20`,
-  },
-  deleteButtonInline: {
-    padding: Spacing.sm,
-    borderRadius: Spacing.borderRadius.sm,
-    backgroundColor: `${Colors.crimson}20`,
-  },
-});

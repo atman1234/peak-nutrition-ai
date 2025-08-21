@@ -2,7 +2,7 @@
   "expo": {
     "name": "Peak Nutrition AI",
     "slug": "peak-nutrition-ai",
-    "version": "0.1.0",
+    "version": "0.1.0-alpha.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -12,10 +12,13 @@
       "resizeMode": "contain",
       "backgroundColor": "#0F172A"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.peaknutritionai"
+      "bundleIdentifier": "com.yourcompany.peaknutritionai",
+      "buildNumber": "100"
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +26,8 @@
         "backgroundColor": "#0F172A"
       },
       "package": "com.yourcompany.peaknutritionai",
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "versionCode": 100
     },
     "web": {
       "bundler": "metro",

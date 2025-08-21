@@ -7,7 +7,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { Colors, TextStyles, Spacing } from '../../constants';
+import { useTheme, TextStyles, Spacing } from '../../constants';
 
 interface ButtonProps {
   title: string;
@@ -18,6 +18,7 @@ interface ButtonProps {
   loading?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  icon?: React.ReactNode;
 }
 
 export function Button({
@@ -29,7 +30,64 @@ export function Button({
   loading = false,
   style,
   textStyle,
+  icon,
 }: ButtonProps) {
+  const { colors } = useTheme();
+
+  const styles = React.useMemo(() => StyleSheet.create({
+    base: {
+      borderRadius: Spacing.borderRadius.md,
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    primary: {
+      backgroundColor: colors.gold,
+    },
+    secondary: {
+      backgroundColor: colors.sage,
+    },
+    outline: {
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: colors.gold,
+    },
+    ghost: {
+      backgroundColor: 'transparent',
+    },
+    sm: {
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: Spacing.xs,
+    },
+    md: {
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+    },
+    lg: {
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.md,
+    },
+    disabled: {
+      backgroundColor: colors.backgroundSecondary,
+      borderColor: colors.border,
+    },
+    text: {
+      fontWeight: '600',
+    },
+    primaryText: {
+      color: '#FFFFFF',
+    },
+    secondaryText: {
+      color: colors.textOnPrimary,
+    },
+    outlineText: {
+      color: colors.gold,
+    },
+    ghostText: {
+      color: colors.textSecondary,
+    },
+  }), [colors]);
+
   const buttonStyle = [
     styles.base,
     styles[variant],
@@ -54,7 +112,7 @@ export function Button({
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'primary' ? Colors.textOnPrimary : Colors.primary}
+          color={variant === 'primary' ? '#FFFFFF' : variant === 'secondary' ? colors.textOnPrimary : colors.gold}
           size="small"
         />
       ) : (
@@ -63,67 +121,3 @@ export function Button({
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  base: {
-    borderRadius: Spacing.borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  text: {
-    textAlign: 'center',
-  },
-
-  // Variants
-  primary: {
-    backgroundColor: Colors.gold,
-  },
-  secondary: {
-    backgroundColor: Colors.sage,
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: Colors.gold,
-  },
-  ghost: {
-    backgroundColor: 'transparent',
-  },
-
-  // Text variants
-  primaryText: {
-    color: Colors.textOnPrimary,
-  },
-  secondaryText: {
-    color: Colors.textOnPrimary,
-  },
-  outlineText: {
-    color: Colors.gold,
-  },
-  ghostText: {
-    color: Colors.gold,
-  },
-
-  // Sizes
-  sm: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    minHeight: 36,
-  },
-  md: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.padding.button,
-    minHeight: 44,
-  },
-  lg: {
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
-    minHeight: 52,
-  },
-
-  // States
-  disabled: {
-    opacity: 0.5,
-  },
-});

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { Colors, Spacing, Shadows } from '../../constants';
+import { useTheme, Spacing, Shadows } from '../../constants';
 
 interface CardProps {
   children: React.ReactNode;
@@ -15,7 +15,25 @@ export function Card({
   padding = 'md',
   style,
 }: CardProps) {
+  const { colors } = useTheme();
   const paddingValue = typeof Spacing[padding] === 'number' ? Spacing[padding] : 16;
+  
+  const styles = React.useMemo(() => StyleSheet.create({
+    base: {
+      backgroundColor: colors.surface,
+      borderRadius: Spacing.borderRadius.lg,
+    },
+    default: {
+      ...Shadows.sm,
+    },
+    elevated: {
+      ...Shadows.elegant,
+    },
+    outlined: {
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+  }), [colors]);
   
   const cardStyle = [
     styles.base,
@@ -26,20 +44,3 @@ export function Card({
 
   return <View style={cardStyle}>{children}</View>;
 }
-
-const styles = StyleSheet.create({
-  base: {
-    backgroundColor: Colors.surface,
-    borderRadius: Spacing.borderRadius.lg,
-  },
-  default: {
-    ...Shadows.sm,
-  },
-  elevated: {
-    ...Shadows.elegant,
-  },
-  outlined: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-});

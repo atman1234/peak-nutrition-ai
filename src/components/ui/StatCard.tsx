@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, TextStyles, Spacing } from '../../constants';
+import { useTheme, TextStyles, Spacing } from '../../constants';
 import { Card } from './Card';
 
 interface StatCardProps {
@@ -20,11 +20,14 @@ export function StatCard({
   value,
   subtitle,
   icon,
-  iconColor = Colors.sage,
+  iconColor,
   trend,
   trendValue,
   style,
 }: StatCardProps) {
+  const { colors } = useTheme();
+  const defaultIconColor = iconColor || colors.sage;
+
   const getTrendIcon = () => {
     switch (trend) {
       case 'up':
@@ -39,13 +42,55 @@ export function StatCard({
   const getTrendColor = () => {
     switch (trend) {
       case 'up':
-        return Colors.success;
+        return colors.success;
       case 'down':
-        return Colors.error;
+        return colors.error;
       default:
-        return Colors.textSecondary;
+        return colors.textSecondary;
     }
   };
+
+  const styles = React.useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      minWidth: 150,
+    },
+    content: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+    },
+    textContent: {
+      flex: 1,
+    },
+    title: {
+      ...TextStyles.label,
+      color: colors.textSecondary,
+      marginBottom: Spacing.xs,
+    },
+    value: {
+      ...TextStyles.h3,
+      color: colors.text,
+      marginBottom: Spacing.xs,
+    },
+    subtitle: {
+      ...TextStyles.caption,
+      color: colors.textTertiary,
+    },
+    iconContainer: {
+      marginLeft: Spacing.md,
+    },
+    trendContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: Spacing.xs,
+    },
+    trendText: {
+      ...TextStyles.caption,
+      marginLeft: Spacing.xs,
+      fontWeight: '600',
+    },
+  }), [colors]);
 
   const combinedStyle = StyleSheet.flatten([styles.container, style]);
   
@@ -73,52 +118,10 @@ export function StatCard({
         
         {icon && (
           <View style={styles.iconContainer}>
-            <Ionicons name={icon} size={32} color={iconColor} />
+            <Ionicons name={icon} size={32} color={defaultIconColor} />
           </View>
         )}
       </View>
     </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    minWidth: 150,
-  },
-  content: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  textContent: {
-    flex: 1,
-  },
-  title: {
-    ...TextStyles.label,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-  },
-  value: {
-    ...TextStyles.h3,
-    color: Colors.text,
-    marginBottom: Spacing.xs,
-  },
-  subtitle: {
-    ...TextStyles.caption,
-    color: Colors.textTertiary,
-  },
-  iconContainer: {
-    marginLeft: Spacing.md,
-  },
-  trendContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: Spacing.xs,
-  },
-  trendText: {
-    ...TextStyles.caption,
-    marginLeft: Spacing.xs,
-    fontWeight: '600',
-  },
-});
