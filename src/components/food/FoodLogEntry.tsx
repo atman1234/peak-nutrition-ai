@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -9,6 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import type { Tables } from '../../types/supabase';
 import { useTheme, TextStyles, Spacing } from '../../constants';
+import { useFavorites } from '../../hooks/useFavorites';
 
 type FoodLog = Tables<'food_logs'>;
 
@@ -17,10 +18,13 @@ interface FoodLogEntryProps {
   onEdit?: () => void;
   onDelete?: () => void;
   isLast?: boolean;
+  showExpandedByDefault?: boolean;
 }
 
-export function FoodLogEntry({ food, onEdit, onDelete, isLast = false }: FoodLogEntryProps) {
+export function FoodLogEntry({ food, onEdit, onDelete, isLast = false, showExpandedByDefault = false }: FoodLogEntryProps) {
   const { colors } = useTheme();
+  const { addFavorite, isFavorite, canAddMoreFavorites } = useFavorites();
+  const [isExpanded, setIsExpanded] = useState(showExpandedByDefault);
   
   const formatTime = (dateString: string | null) => {
     if (!dateString) return 'Unknown time';
@@ -43,6 +47,22 @@ export function FoodLogEntry({ food, onEdit, onDelete, isLast = false }: FoodLog
         },
       ]
     );
+  };
+
+  const handleAddToFavorites = () => {
+    if (!food.food_item_id) {
+      Alert.alert('Error', 'Cannot add this food to favorites');
+      return;
+    }
+    
+    addFavorite({
+      food_item_id: food.food_item_id,
+      typical_portion_grams: food.portion_grams || 100,
+    });
+  };
+
+  const toggleExpanded = () => {
+    setIsExpanded(!isExpanded);
   };
 
   const styles = React.useMemo(() => StyleSheet.create({
@@ -136,11 +156,60 @@ export function FoodLogEntry({ food, onEdit, onDelete, isLast = false }: FoodLog
       borderRadius: Spacing.borderRadius.sm,
       backgroundColor: `${colors.crimson}20`,
     },
+    expandedContent: {
+      backgroundColor: colors.backgroundSecondary,
+      paddingHorizontal: Spacing.md,
+      paddingBottom: Spacing.md,
+    },
+    notesSection: {
+      marginBottom: Spacing.sm,
+    },
+    notesLabel: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      fontWeight: '600',
+      marginBottom: Spacing.xs,
+    },
+    notesText: {
+      ...TextStyles.body,
+      color: colors.text,
+      fontStyle: 'italic',
+    },
+    detailedMacros: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      paddingVertical: Spacing.sm,
+      backgroundColor: colors.surface,
+      borderRadius: Spacing.borderRadius.sm,
+      marginBottom: Spacing.sm,
+    },
+    macroItem: {
+      alignItems: 'center',
+    },
+    macroValue: {
+      ...TextStyles.body,
+      color: colors.text,
+      fontWeight: '600',
+    },
+    macroLabel: {
+      ...TextStyles.caption,
+      color: colors.textSecondary,
+      fontSize: 11,
+    },
+    expandButton: {
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: Spacing.xs,
+    },
+    favoriteButton: {
+      padding: Spacing.sm,
+      borderRadius: Spacing.borderRadius.sm,
+      backgroundColor: `${colors.sage}20`,
+    },
   }), [colors]);
 
   return (
     <View style={[styles.container, !isLast && styles.containerWithBorder]}>
-      <View style={styles.content}>
+      <TouchableOpacity style={styles.content} onPress={toggleExpanded} activeOpacity={0.7}>
         <View style={styles.foodInfo}>
           <Text style={styles.foodName} numberOfLines={1}>
             {food.food_name}
@@ -182,9 +251,59 @@ export function FoodLogEntry({ food, onEdit, onDelete, isLast = false }: FoodLog
           </View>
         </View>
 
-        {/* Simple edit/delete buttons */}
-        {(onEdit || onDelete) && (
+        <TouchableOpacity style={styles.expandButton} onPress={toggleExpanded}>
+          <Ionicons
+            name={isExpanded ? "chevron-up" : "chevron-down"}
+            size={20}
+            color={colors.textSecondary}
+          />
+        </TouchableOpacity>
+      </TouchableOpacity>
+
+      {/* Expanded Content */}
+      {isExpanded && (
+        <View style={styles.expandedContent}>
+          {/* Detailed Macros */}
+          <View style={styles.detailedMacros}>
+            <View style={styles.macroItem}>
+              <Text style={styles.macroValue}>{Math.round(food.calories_consumed || 0)}</Text>
+              <Text style={styles.macroLabel}>Calories</Text>
+            </View>
+            <View style={styles.macroItem}>
+              <Text style={styles.macroValue}>{Math.round(food.protein_consumed || 0)}g</Text>
+              <Text style={styles.macroLabel}>Protein</Text>
+            </View>
+            <View style={styles.macroItem}>
+              <Text style={styles.macroValue}>{Math.round(food.carbs_consumed || 0)}g</Text>
+              <Text style={styles.macroLabel}>Carbs</Text>
+            </View>
+            <View style={styles.macroItem}>
+              <Text style={styles.macroValue}>{Math.round(food.fat_consumed || 0)}g</Text>
+              <Text style={styles.macroLabel}>Fat</Text>
+            </View>
+            {food.fiber_consumed && (
+              <View style={styles.macroItem}>
+                <Text style={styles.macroValue}>{Math.round(food.fiber_consumed)}g</Text>
+                <Text style={styles.macroLabel}>Fiber</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Notes */}
+          {food.notes && (
+            <View style={styles.notesSection}>
+              <Text style={styles.notesLabel}>Notes</Text>
+              <Text style={styles.notesText}>{food.notes}</Text>
+            </View>
+          )}
+
+          {/* Action Buttons */}
           <View style={styles.actionButtonsInline}>
+            {food.food_item_id && !isFavorite(food.food_item_id) && canAddMoreFavorites && (
+              <TouchableOpacity style={styles.favoriteButton} onPress={handleAddToFavorites}>
+                <Ionicons name="heart-outline" size={16} color={colors.sage} />
+              </TouchableOpacity>
+            )}
             {onEdit && (
               <TouchableOpacity style={styles.editButtonInline} onPress={onEdit}>
                 <Ionicons name="pencil" size={16} color={colors.gold} />
@@ -196,9 +315,8 @@ export function FoodLogEntry({ food, onEdit, onDelete, isLast = false }: FoodLog
               </TouchableOpacity>
             )}
           </View>
-        )}
-      </View>
-
+        </View>
+      )}
     </View>
   );
 }

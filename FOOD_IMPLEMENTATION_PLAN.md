@@ -86,16 +86,15 @@
 - [ ] **Search Hint**: "Press Enter or click search to find foods"
 - [ ] **Unified Search Results**: Favorites > Saved > USDA Foundation > USDA Branded
 
-### 8. TodaysFoodLog Enhancements - BASIC VERSION EXISTS, NEEDS MAJOR UPGRADES
-- [ ] **Expandable Details System**: Show/Hide all details toggle
-- [ ] **Individual Item Expand/Collapse**: Per-item detail toggling
-- [ ] **Ingredient Lists with Nutrition**: Show parsed ingredients
-- [ ] **Notes Display**: Show entry notes
-- [ ] **Enhanced Entry Management**: Proper edit/delete with confirmation
-- [ ] **Add to Favorites from Log**: Convert log entries to favorites
-- [ ] **Visual Indicators**: Meal icons (Coffee ☕, Utensils 🍽️, Moon 🌙, Cookie 🍪)
-- [ ] **Macro Breakdown Per Entry**: Detailed nutrition per item
-- [ ] **Daily Totals Summary**: Enhanced summary with percentages
+### 8. TodaysFoodLog Enhancements - COMPLETE ✅
+- [x] **Expandable Details System**: Show/Hide all details toggle
+- [x] **Individual Item Expand/Collapse**: Per-item detail toggling
+- [x] **Notes Display**: Show entry notes
+- [x] **Enhanced Entry Management**: Proper edit/delete with confirmation
+- [x] **Add to Favorites from Log**: Convert log entries to favorites
+- [x] **Visual Indicators**: Meal icons (Coffee ☕, Utensils 🍽️, Moon 🌙, Cookie 🍪)
+- [x] **Macro Breakdown Per Entry**: Detailed nutrition per item
+- [x] **Daily Totals Summary**: Enhanced summary with percentages
 
 ### 9. Food Search Modal - COMPLETELY MISSING
 - [ ] **Modal Component**: Full-screen search interface

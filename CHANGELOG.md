@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.7] - 2025-08-21 (Alpha)
+
+### Fixed | 2025-08-21 12:12:46
+
+- fixed analytics page by fixing broken npm packages
+
+### Files Changed (9) | 2025-08-21 12:12:46
+
+- Modified: FOOD_IMPLEMENTATION_PLAN.md
+- Modified: bun.lock
+- Modified: package.json
+- Modified: src/components/food/FoodLogEntry.tsx
+- Modified: src/components/food/MealSection.tsx
+- Modified: src/components/food/QuickFoodAdd.tsx
+- Modified: src/components/food/TodaysFoodLog.tsx
+- Untracked: .git_simplifier_backups/backup_20250821_121246.json
+- Untracked: src/components/food/USDASearchModal.tsx
+
 ## [0.1.0-alpha.6] - 2025-08-21 (Alpha)
 
 ### Added | 2025-08-21 12:04:12

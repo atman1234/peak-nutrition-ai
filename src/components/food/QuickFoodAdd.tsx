@@ -29,6 +29,7 @@ import { FoodAutocomplete } from './FoodAutocomplete';
 import { PortionPicker } from './PortionPicker';
 import { MealTypePicker } from './MealTypePicker';
 import { FoodNutritionPreview } from './FoodNutritionPreview';
+import { USDASearchModal } from './USDASearchModal';
 import { foodLogSchema, FoodLogFormData, getValidationContext } from '../../lib/validation/schemas';
 import { z } from 'zod';
 

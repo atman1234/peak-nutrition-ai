@@ -23,6 +23,7 @@ interface MealSectionProps {
   color: string;
   onEditEntry?: (entryId: string) => void;
   onDeleteEntry?: (entryId: string) => void;
+  showExpandedDetails?: boolean;
 }
 
 export function MealSection({
@@ -33,6 +34,7 @@ export function MealSection({
   color,
   onEditEntry,
   onDeleteEntry,
+  showExpandedDetails = false,
 }: MealSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const { colors } = useTheme();
@@ -192,6 +194,7 @@ export function MealSection({
                 onEdit={onEditEntry ? () => onEditEntry(food.id) : undefined}
                 onDelete={onDeleteEntry ? () => onDeleteEntry(food.id) : undefined}
                 isLast={index === foods.length - 1}
+                showExpandedByDefault={showExpandedDetails}
               />
             ))}
           </View>

@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useFoodLogs } from '../../hooks/useFoodLogs';
 import { MealType } from '../../types/food';
 import { useTheme, TextStyles, Spacing } from '../../constants';
@@ -18,6 +19,7 @@ export function TodaysFoodLog({
 }: TodaysFoodLogProps) {
   const { colors } = useTheme();
   const { foodLogs, dailySummary, isLoading } = useFoodLogs();
+  const [showAllDetails, setShowAllDetails] = useState(false);
 
   const mealOrder: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
@@ -52,6 +54,24 @@ export function TodaysFoodLog({
       ...TextStyles.body,
       color: colors.textSecondary,
       fontSize: 14,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    toggleButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
+      padding: Spacing.sm,
+      borderRadius: Spacing.borderRadius.sm,
+      backgroundColor: colors.backgroundSecondary,
+    },
+    toggleButtonText: {
+      ...TextStyles.caption,
+      color: colors.text,
+      fontWeight: '600',
     },
     listContent: {
       padding: Spacing.md,
@@ -141,6 +161,7 @@ export function TodaysFoodLog({
         color={getMealColor(mealType)}
         onEditEntry={onEditEntry}
         onDeleteEntry={onDeleteEntry}
+        showExpandedDetails={showAllDetails}
       />
     );
   };
@@ -148,11 +169,28 @@ export function TodaysFoodLog({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Today's Food Log</Text>
-        <View style={styles.totalNutrition}>
-          <Text style={styles.totalText}>
-            {Math.round(dailySummary.totalCalories)} calories • {Math.round(dailySummary.totalProtein)}g protein
-          </Text>
+        <View>
+          <Text style={styles.title}>Today's Food Log</Text>
+          <View style={styles.totalNutrition}>
+            <Text style={styles.totalText}>
+              {Math.round(dailySummary.totalCalories)} calories • {Math.round(dailySummary.totalProtein)}g protein
+            </Text>
+          </View>
+        </View>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={styles.toggleButton}
+            onPress={() => setShowAllDetails(!showAllDetails)}
+          >
+            <Text style={styles.toggleButtonText}>
+              {showAllDetails ? 'Hide' : 'Show'} Details
+            </Text>
+            <Ionicons 
+              name={showAllDetails ? "eye-off-outline" : "eye-outline"} 
+              size={16} 
+              color={colors.text} 
+            />
+          </TouchableOpacity>
         </View>
       </View>
 
