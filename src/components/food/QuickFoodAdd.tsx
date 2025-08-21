@@ -68,6 +68,48 @@ export function QuickFoodAdd({
   const watchedValues = watch();
   const portionSuggestions = selectedFood ? [getPortionSuggestion(selectedFood.id, selectedFood.name).suggested_portion] : [];
 
+  const styles = React.useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: Spacing.md,
+      gap: Spacing.md,
+      paddingBottom: Spacing.xl,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: Spacing.xl,
+    },
+    searchSection: {
+      padding: Spacing.md,
+    },
+    sectionTitle: {
+      ...TextStyles.h4,
+      color: colors.text,
+      marginBottom: Spacing.md,
+    },
+    favoritesSection: {
+      padding: Spacing.md,
+    },
+    actionButtons: {
+      flexDirection: 'row',
+      gap: Spacing.md,
+      marginTop: Spacing.md,
+    },
+    cancelButton: {
+      flex: 1,
+    },
+    submitButton: {
+      flex: 2,
+    },
+  }), [colors]);
+
   function getCurrentMealType(): MealType {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 11) return 'breakfast';
