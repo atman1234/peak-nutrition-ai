@@ -1,12 +1,80 @@
 {
-  "current_version": "0.1.0-alpha.9",
+  "current_version": "0.1.0-alpha.10",
   "version_type": "alpha",
   "major": 0,
   "minor": 1,
   "patch": 0,
-  "alpha": 9,
+  "alpha": 10,
   "beta": 0,
   "history": [
+    {
+      "version": "0.1.0-alpha.10",
+      "message": "fixed web bundling issues",
+      "timestamp": "2025-08-21T20:05:49.765937+00:00",
+      "category": "Fixed",
+      "files_changed": [
+        {
+          "Modified": "app/(app)/profile/index.tsx"
+        },
+        {
+          "Modified": "babel.config.js"
+        },
+        {
+          "Modified": "bun.lock"
+        },
+        {
+          "Modified": "metro.config.js"
+        },
+        {
+          "Modified": "package.json"
+        },
+        {
+          "Modified": "src/components/food/SwipeableFoodEntry.tsx"
+        },
+        {
+          "Untracked": ".git_simplifier_backups/backup_20250821_130549.json"
+        },
+        {
+          "Untracked": "TextInputState.web.js"
+        },
+        {
+          "Untracked": "src/services/stripe/StripeProvider.native.js"
+        },
+        {
+          "Untracked": "src/services/stripe/StripeProvider.web.js"
+        },
+        {
+          "Untracked": "src/services/stripe/index.js"
+        },
+        {
+          "Untracked": "web-entry.js"
+        },
+        {
+          "Untracked": "web-mock.js"
+        },
+        {
+          "Untracked": "web-mocks/BaseViewConfig.js"
+        },
+        {
+          "Untracked": "web-mocks/PlatformColorValueTypes.js"
+        },
+        {
+          "Untracked": "web-mocks/RCTAlertManager.js"
+        },
+        {
+          "Untracked": "web-mocks/ReactDevToolsSettingsManager.js"
+        },
+        {
+          "Untracked": "web-mocks/index.js"
+        },
+        {
+          "Untracked": "web-mocks/legacySendAccessibilityEvent.js"
+        },
+        {
+          "Untracked": "web-mocks/resolveAssetSource.js"
+        }
+      ]
+    },
     {
       "version": "0.1.0-alpha.9",
       "message": "added profile and profile edit pages",

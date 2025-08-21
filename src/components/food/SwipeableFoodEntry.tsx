@@ -1,15 +1,35 @@
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  runOnJS,
-  interpolateColor,
-} from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, Pressable, Alert, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
+
+// Platform-specific imports
+let Gesture, GestureDetector, Animated, useSharedValue, useAnimatedStyle, withSpring, runOnJS, interpolateColor;
+
+if (Platform.OS !== 'web') {
+  const gestureHandler = require('react-native-gesture-handler');
+  const reanimated = require('react-native-reanimated');
+  
+  Gesture = gestureHandler.Gesture;
+  GestureDetector = gestureHandler.GestureDetector;
+  Animated = reanimated.default;
+  useSharedValue = reanimated.useSharedValue;
+  useAnimatedStyle = reanimated.useAnimatedStyle;
+  withSpring = reanimated.withSpring;
+  runOnJS = reanimated.runOnJS;
+  interpolateColor = reanimated.interpolateColor;
+} else {
+  // Web fallbacks
+  Animated = View;
+  useSharedValue = (val) => ({ value: val });
+  useAnimatedStyle = (fn) => ({});
+  withSpring = (val) => val;
+  runOnJS = (fn) => fn;
+  interpolateColor = () => '#000';
+  Gesture = { Pan: () => ({ onUpdate: () => {}, onEnd: () => {} }) };
+  GestureDetector = ({ children }) => children;
+}
+
+import { Ionicons } from '@expo/vector-icons';
 import { FoodLog } from '../../types/food';
 import { useTheme, TextStyles, Spacing } from '../../constants';
 

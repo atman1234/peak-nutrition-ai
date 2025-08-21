@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.10] - 2025-08-21 (Alpha)
+
+### Fixed | 2025-08-21 13:05:49
+
+- fixed web bundling issues
+
 ## [0.1.0-alpha.9] - 2025-08-21 (Alpha)
 
 ### Added | 2025-08-21 12:42:33

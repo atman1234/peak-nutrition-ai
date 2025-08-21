@@ -363,7 +363,7 @@ export default function ProfileScreen() {
       flex: 1,
       paddingVertical: Spacing.sm,
       paddingHorizontal: Spacing.md,
-      borderRadius: Spacing.borderRadius.xs,
+      borderRadius: Spacing.borderRadius.sm,
       alignItems: 'center',
     },
     unitsOptionActive: {
@@ -1052,13 +1052,13 @@ export default function ProfileScreen() {
                     <View style={styles.displayField}>
                       <Text style={styles.displayFieldLabel}>Gender</Text>
                       <Text style={styles.displayFieldValue}>
-                        {profile.gender?.charAt(0).toUpperCase() + profile.gender?.slice(1)}
+                        {profile.gender ? profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1) : '--'}
                       </Text>
                     </View>
                     <View style={styles.displayField}>
                       <Text style={styles.displayFieldLabel}>Units</Text>
                       <Text style={styles.displayFieldValue}>
-                        {profile.preferred_units?.charAt(0).toUpperCase() + profile.preferred_units?.slice(1) || 'Imperial'}
+                        {profile.preferred_units ? profile.preferred_units.charAt(0).toUpperCase() + profile.preferred_units.slice(1) : 'Imperial'}
                       </Text>
                     </View>
                   </View>
@@ -1226,7 +1226,7 @@ export default function ProfileScreen() {
                   { backgroundColor: isPro ? `${colors.gold}20` : colors.backgroundSecondary }
                 ]}>
                   <Ionicons 
-                    name={isPro ? 'crown' : 'star'} 
+                    name={isPro ? 'diamond' : 'star'} 
                     size={20} 
                     color={isPro ? colors.gold : colors.textSecondary} 
                   />
