@@ -70,6 +70,7 @@ export const QuickFoodAdd = React.forwardRef<
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showWebDatePicker, setShowWebDatePicker] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [showUSDAModal, setShowUSDAModal] = useState(false);
 
   const { colors } = useTheme();
   const { addFoodLog } = useFoodLogs();
@@ -725,8 +726,7 @@ export const QuickFoodAdd = React.forwardRef<
                   title="Search USDA"
                   variant="outline"
                   onPress={() => {
-                    // TODO: Implement USDA search modal
-                    Alert.alert('USDA Search', 'USDA search modal will be implemented next');
+                    setShowUSDAModal(true);
                   }}
                   style={styles.usdaButton}
                 />
@@ -883,6 +883,7 @@ export const QuickFoodAdd = React.forwardRef<
                     onSelectFood={handleFoodSelect}
                     placeholder="Type food name and press Enter to search..."
                     error={errors.searchTerm?.message}
+                    disabled={showUSDAModal}
                   />
                 )}
               />
@@ -1315,6 +1316,13 @@ export const QuickFoodAdd = React.forwardRef<
             </TouchableWithoutFeedback>
           </Modal>
         )}
+
+        {/* USDA Search Modal */}
+        <USDASearchModal
+          visible={showUSDAModal}
+          onClose={() => setShowUSDAModal(false)}
+          onSelectFood={handleFoodSelect}
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   );

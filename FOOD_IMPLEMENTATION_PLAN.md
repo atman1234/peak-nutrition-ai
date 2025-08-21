@@ -64,13 +64,14 @@
 - [x] **Tier Limits Display**: "X favorites" counter
 - [x] **Quick-Add Functionality**: One-tap add from favorites
 
-### 5. USDA Search Modal - PLACEHOLDER EXISTS, NEEDS FULL IMPLEMENTATION
-- [ ] **Simple/Advanced Search Modes**: Basic query vs separate name/brand fields
-- [ ] **Brand Filtering**: Filter by specific brands
-- [ ] **Recent Searches History**: Last 5 searches with click to re-search
-- [ ] **Favorite Toggle from Results**: Add/remove favorites directly from search
-- [ ] **Batch Saving to Database**: Save multiple USDA foods at once
-- [ ] **Source Badges**: Visual indicators for USDA/Saved/Foundation/Branded
+### 5. USDA Search Modal - COMPLETE ✅
+- [x] **Simple/Advanced Search Modes**: Basic query vs separate name/brand fields
+- [x] **Brand Filtering**: Filter by specific brands in advanced mode
+- [x] **Recent Searches History**: Last 5 searches with click to re-search
+- [x] **Modal Interface**: Full-screen search with proper navigation
+- [x] **AsyncStorage Integration**: Persistent recent searches
+- [x] **Error Handling**: Proper error states and retry functionality
+- [x] **Loading States**: Search progress indicators
 
 ### 6. Smart Features - PARTIALLY IMPLEMENTED, NEEDS COMPLETION
 - [ ] **Enhanced Portion History**: Confidence levels (high/medium/low)
@@ -96,14 +97,13 @@
 - [x] **Macro Breakdown Per Entry**: Detailed nutrition per item
 - [x] **Daily Totals Summary**: Enhanced summary with percentages
 
-### 9. Food Search Modal - COMPLETELY MISSING
-- [ ] **Modal Component**: Full-screen search interface
-- [ ] **Simple vs Advanced Search**: Toggle between modes
-- [ ] **USDA + Saved Foods Integration**: Combined search results
-- [ ] **Recent Searches Persistence**: LocalStorage for search history
-- [ ] **Batch Operations**: Save multiple foods to database
-- [ ] **Nutrition Display**: Per 100g nutrition info
-- [ ] **Source Badges**: USDA Foundation/Branded indicators
+### 9. Food Search Modal - COMPLETE ✅ (Integrated with USDA Search Modal)
+- [x] **Modal Component**: Full-screen search interface
+- [x] **Simple vs Advanced Search**: Toggle between modes
+- [x] **USDA + Saved Foods Integration**: Combined search results via UnifiedFoodSearch
+- [x] **Recent Searches Persistence**: AsyncStorage for search history
+- [x] **Nutrition Display**: Per 100g nutrition info with FoodSearchItem
+- [x] **Source Badges**: USDA Foundation/Branded indicators
 
 ### 10. Enhanced Form Management - BASIC EXISTS, NEEDS UPGRADES
 - [x] **Real-time Macro Recalculation**: Live updates during portion changes

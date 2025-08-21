@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.8] - 2025-08-21 (Alpha)
+
+### Fixed | 2025-08-21 12:29:53
+
+- fixed food search in mobile, got usda search working in both
+
+### Files Changed (5) | 2025-08-21 12:29:53
+
+- Modified: FOOD_IMPLEMENTATION_PLAN.md
+- Modified: src/components/food/FoodAutocomplete.tsx
+- Modified: src/components/food/QuickFoodAdd.tsx
+- Modified: src/components/food/USDASearchModal.tsx
+- Untracked: .git_simplifier_backups/backup_20250821_122953.json
+
 ## [0.1.0-alpha.7] - 2025-08-21 (Alpha)
 
 ### Fixed | 2025-08-21 12:12:46

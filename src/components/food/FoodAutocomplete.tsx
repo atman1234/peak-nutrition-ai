@@ -80,19 +80,40 @@ export function FoodAutocomplete({
     },
     modalOverlay: {
       flex: 1,
-      backgroundColor: colors.overlay,
-      justifyContent: 'center',
-      paddingHorizontal: Spacing.md,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: Platform.OS === 'web' ? 'center' : 'flex-start',
+      alignItems: 'center',
+      paddingTop: Platform.OS === 'web' ? 0 : 50,
     },
-    suggestionsContainer: {
+    modalContainer: {
+      width: Platform.OS === 'web' ? '90%' : '100%',
+      maxWidth: Platform.OS === 'web' ? 600 : undefined,
+      height: Platform.OS === 'web' ? '90%' : '95%',
       backgroundColor: colors.surface,
-      borderRadius: Spacing.borderRadius.lg,
-      maxHeight: '70%',
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.15,
-      shadowRadius: 16,
-      elevation: 8,
+      borderRadius: Platform.OS === 'web' ? Spacing.borderRadius.lg : Spacing.borderRadius.lg,
+      overflow: 'hidden',
+      marginHorizontal: Platform.OS === 'web' ? 0 : 10,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.backgroundSecondary,
+    },
+    title: {
+      ...TextStyles.h3,
+      color: colors.text,
+      flex: 1,
+    },
+    closeButton: {
+      padding: Spacing.sm,
+      borderRadius: Spacing.borderRadius.sm,
+    },
+    content: {
+      flex: 1,
     },
     loadingContainer: {
       padding: Spacing.xl,
@@ -104,8 +125,9 @@ export function FoodAutocomplete({
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
       backgroundColor: colors.backgroundSecondary,
-      borderTopLeftRadius: Spacing.borderRadius.lg,
-      borderTopRightRadius: Spacing.borderRadius.lg,
+    },
+    resultsContainer: {
+      flex: 1,
     },
     resultsHeaderText: {
       ...TextStyles.caption,
@@ -116,8 +138,10 @@ export function FoodAutocomplete({
       flex: 1,
     },
     emptyContainer: {
-      padding: Spacing.xl,
+      flex: 1,
+      justifyContent: 'center',
       alignItems: 'center',
+      padding: Spacing.xl,
     },
     emptyText: {
       ...TextStyles.body,
@@ -166,6 +190,7 @@ export function FoodAutocomplete({
     
     try {
       const results = await searchUnifiedFoods(value, 8);
+      console.log('FoodAutocomplete search results:', results.length, results);
       setSearchResults(results);
     } catch (error) {
       console.error('Search error:', error);
@@ -183,10 +208,16 @@ export function FoodAutocomplete({
   }, [performSearch]);
 
   const handleFocus = () => {
+    // Don't show suggestions if disabled or component is not ready
+    if (disabled) return;
+    
     // Only show suggestions if we have previous results and search has been performed
-    if (!disabled && hasSearched && searchResults.length > 0) {
-      setShowSuggestions(true);
-    }
+    // Add a small delay to prevent immediate reopening when closing modals
+    setTimeout(() => {
+      if (!disabled && hasSearched && searchResults.length > 0) {
+        setShowSuggestions(true);
+      }
+    }, 100);
   };
 
   const handleInputChange = (text: string) => {
@@ -267,48 +298,56 @@ export function FoodAutocomplete({
       <Modal
         visible={showResults}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={handleCloseModal}
       >
         <TouchableWithoutFeedback onPress={handleCloseModal}>
           <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.suggestionsContainer}>
-                {isSearching ? (
-                  <View style={styles.loadingContainer}>
-                    <LoadingSpinner size="small" text="Searching foods..." />
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={styles.modalContainer}>
+                <View style={styles.header}>
+                  <Text style={styles.title}>Search Results</Text>
+                  <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
+                    <Ionicons name="close" size={24} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.content}>
+                  <View style={styles.resultsHeader}>
+                    <Text style={styles.resultsHeaderText}>
+                      {searchResults.length} results for "{value}"
+                    </Text>
                   </View>
-                ) : (
-                  <>
-                    <View style={styles.resultsHeader}>
-                      <Text style={styles.resultsHeaderText}>
-                        {searchResults.length} results for "{value}"
-                      </Text>
-                    </View>
-                    
-                    <FlatList
-                      data={searchResults}
-                      renderItem={renderSearchItem}
-                      keyExtractor={keyExtractor}
-                      style={styles.resultsList}
-                      keyboardShouldPersistTaps="handled"
-                      showsVerticalScrollIndicator={false}
-                      maxToRenderPerBatch={8}
-                      windowSize={10}
-                      removeClippedSubviews={Platform.OS === 'android'}
-                      ListEmptyComponent={() => (
-                        <View style={styles.emptyContainer}>
-                          <Text style={styles.emptyText}>
-                            No foods found for "{value}"
-                          </Text>
-                          <Text style={styles.emptySubtext}>
-                            Try a different search term or check your spelling
-                          </Text>
-                        </View>
-                      )}
-                    />
-                  </>
-                )}
+                  
+                  <View style={styles.resultsContainer}>
+                    {isSearching ? (
+                      <View style={styles.loadingContainer}>
+                        <LoadingSpinner size="large" text="Searching foods..." />
+                      </View>
+                    ) : searchResults.length > 0 ? (
+                      <FlatList
+                        data={searchResults}
+                        renderItem={renderSearchItem}
+                        keyExtractor={keyExtractor}
+                        style={styles.resultsList}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
+                        maxToRenderPerBatch={8}
+                        windowSize={10}
+                        removeClippedSubviews={Platform.OS === 'android'}
+                      />
+                    ) : (
+                      <View style={styles.emptyContainer}>
+                        <Text style={styles.emptyText}>
+                          No foods found for "{value}"
+                        </Text>
+                        <Text style={styles.emptySubtext}>
+                          Try a different search term or check your spelling
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
               </View>
             </TouchableWithoutFeedback>
           </View>

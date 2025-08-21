@@ -1,12 +1,35 @@
 {
-  "current_version": "0.1.0-alpha.7",
+  "current_version": "0.1.0-alpha.8",
   "version_type": "alpha",
   "major": 0,
   "minor": 1,
   "patch": 0,
-  "alpha": 7,
+  "alpha": 8,
   "beta": 0,
   "history": [
+    {
+      "version": "0.1.0-alpha.8",
+      "message": "fixed food search in mobile, got usda search working in both",
+      "timestamp": "2025-08-21T19:29:53.806789+00:00",
+      "category": "Fixed",
+      "files_changed": [
+        {
+          "Modified": "FOOD_IMPLEMENTATION_PLAN.md"
+        },
+        {
+          "Modified": "src/components/food/FoodAutocomplete.tsx"
+        },
+        {
+          "Modified": "src/components/food/QuickFoodAdd.tsx"
+        },
+        {
+          "Modified": "src/components/food/USDASearchModal.tsx"
+        },
+        {
+          "Untracked": ".git_simplifier_backups/backup_20250821_122953.json"
+        }
+      ]
+    },
     {
       "version": "0.1.0-alpha.7",
       "message": "fixed analytics page by fixing broken npm packages",

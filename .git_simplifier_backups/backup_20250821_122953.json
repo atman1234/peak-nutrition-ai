@@ -1,0 +1,44 @@
+{
+  "timestamp": "2025-08-21T12:29:53.546936",
+  "current_branch": "main",
+  "commit_hash": "0df9dac2fb16432f64864a2faada10d808df631a",
+  "tags": [
+    "v0.1.0",
+    "v0.1.0-alpha.1",
+    "v0.1.0-alpha.2",
+    "v0.1.0-alpha.3",
+    "v0.1.0-alpha.4",
+    "v0.1.0-alpha.5",
+    "v0.1.0-alpha.6",
+    "v0.1.0-alpha.7"
+  ],
+  "uncommitted_changes": {
+    "staged_files": [],
+    "modified_files": [
+      {
+        "status": "M",
+        "file": "FOOD_IMPLEMENTATION_PLAN.md"
+      },
+      {
+        "status": "M",
+        "file": "src/components/food/FoodAutocomplete.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/food/QuickFoodAdd.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/food/USDASearchModal.tsx"
+      }
+    ],
+    "untracked_files": [],
+    "has_changes": true
+  },
+  "stash_count": 1,
+  "remote_branches": [
+    "origin/main"
+  ],
+  "operation_context": "increment_to_0.1.0-alpha.8",
+  "backup_id": "backup_20250821_122953"
+}

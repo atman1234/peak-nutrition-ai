@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Modal,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   ScrollView,
   TextInput,
   FlatList,
@@ -38,13 +39,11 @@ export function USDASearchModal({ visible, onClose, onSelectFood }: USDASearchMo
   const simpleInputRef = useRef<TextInput>(null);
   const advancedNameInputRef = useRef<TextInput>(null);
 
-  const {
-    searchResults,
-    isSearching,
-    error,
-    performSearch,
-    clearResults,
-  } = useUnifiedFoodSearch();
+  const { searchUnifiedFoods } = useUnifiedFoodSearch();
+  
+  const [searchResults, setSearchResults] = useState<UnifiedFoodResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (visible) {
@@ -64,9 +63,26 @@ export function USDASearchModal({ visible, onClose, onSelectFood }: USDASearchMo
       setSimpleQuery('');
       setAdvancedName('');
       setAdvancedBrand('');
-      clearResults();
+      setSearchResults([]);
+      setError(null);
     }
   }, [visible, searchMode]);
+
+  // Handle escape key on web
+  useEffect(() => {
+    if (!visible) return;
+
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      document.addEventListener('keydown', handleKeyPress);
+      return () => document.removeEventListener('keydown', handleKeyPress);
+    }
+  }, [visible, onClose]);
 
   const loadRecentSearches = async () => {
     try {
@@ -120,8 +136,23 @@ export function USDASearchModal({ visible, onClose, onSelectFood }: USDASearchMo
       return;
     }
 
-    await performSearch(query);
-    await saveToRecentSearches(query);
+    setIsSearching(true);
+    setError(null);
+    
+    console.log('USDA Modal searching with query:', query);
+
+    try {
+      const results = await searchUnifiedFoods(query, 15);
+      console.log('USDA Modal search results:', results.length, results);
+      setSearchResults(results);
+      await saveToRecentSearches(query);
+    } catch (err) {
+      console.error('Search error:', err);
+      setError(err instanceof Error ? err.message : 'Search failed');
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleRecentSearchPress = async (recentQuery: string) => {
@@ -133,7 +164,20 @@ export function USDASearchModal({ visible, onClose, onSelectFood }: USDASearchMo
       setAdvancedBrand('');
     }
     
-    await performSearch(recentQuery);
+    
+    setIsSearching(true);
+    setError(null);
+
+    try {
+      const results = await searchUnifiedFoods(recentQuery, 15);
+      setSearchResults(results);
+    } catch (err) {
+      console.error('Search error:', err);
+      setError(err instanceof Error ? err.message : 'Search failed');
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const clearRecentSearches = async () => {
@@ -206,16 +250,18 @@ export function USDASearchModal({ visible, onClose, onSelectFood }: USDASearchMo
     modalOverlay: {
       flex: 1,
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      justifyContent: 'center',
+      justifyContent: Platform.OS === 'web' ? 'center' : 'flex-start',
       alignItems: 'center',
+      paddingTop: Platform.OS === 'web' ? 0 : 50,
     },
     modalContainer: {
-      width: Platform.OS === 'web' ? '90%' : '95%',
-      maxWidth: 600,
-      maxHeight: '90%',
+      width: Platform.OS === 'web' ? '90%' : '100%',
+      maxWidth: Platform.OS === 'web' ? 600 : undefined,
+      height: Platform.OS === 'web' ? '90%' : '95%',
       backgroundColor: colors.surface,
-      borderRadius: Spacing.borderRadius.lg,
+      borderRadius: Platform.OS === 'web' ? Spacing.borderRadius.lg : Spacing.borderRadius.lg,
       overflow: 'hidden',
+      marginHorizontal: Platform.OS === 'web' ? 0 : 10,
     },
     header: {
       flexDirection: 'row',
@@ -410,8 +456,10 @@ export function USDASearchModal({ visible, onClose, onSelectFood }: USDASearchMo
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalOverlay}>
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <View style={styles.modalContainer}>
           <View style={styles.header}>
             <Text style={styles.title}>Search Foods</Text>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -548,8 +596,10 @@ export function USDASearchModal({ visible, onClose, onSelectFood }: USDASearchMo
               {renderSearchResults()}
             </View>
           </View>
+            </View>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }
