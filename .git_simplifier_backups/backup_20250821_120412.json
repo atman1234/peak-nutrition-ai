@@ -1,0 +1,34 @@
+{
+  "timestamp": "2025-08-21T12:04:12.759637",
+  "current_branch": "main",
+  "commit_hash": "e78408c0ae56985ceb7ef71ece829861b236902d",
+  "tags": [
+    "v0.1.0",
+    "v0.1.0-alpha.1",
+    "v0.1.0-alpha.2",
+    "v0.1.0-alpha.3",
+    "v0.1.0-alpha.4",
+    "v0.1.0-alpha.5"
+  ],
+  "uncommitted_changes": {
+    "staged_files": [],
+    "modified_files": [
+      {
+        "status": "M",
+        "file": "app/(app)/food/index.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/components/food/FavoritesCarousel.tsx"
+      }
+    ],
+    "untracked_files": [],
+    "has_changes": true
+  },
+  "stash_count": 1,
+  "remote_branches": [
+    "origin/main"
+  ],
+  "operation_context": "increment_to_0.1.0-alpha.6",
+  "backup_id": "backup_20250821_120412"
+}

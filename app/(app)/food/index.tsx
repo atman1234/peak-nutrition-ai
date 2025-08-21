@@ -57,6 +57,9 @@ export default function FoodLogScreen() {
       padding: Spacing.md,
       gap: Spacing.lg,
     },
+    scrollContent: {
+      padding: Spacing.md,
+    },
     mobileSection: {
       marginBottom: Spacing.md,
     },
@@ -73,7 +76,11 @@ export default function FoodLogScreen() {
   if (isTablet && Platform.OS === 'web') {
     // Web/Tablet: Two-column layout
     return (
-      <View style={styles.container}>
+      <ScrollView 
+        style={[styles.container]}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.tabletContainer}>
           <View style={styles.leftColumn}>
             <FavoritesCarousel onSelectFood={handleFavoriteSelect} />
@@ -91,7 +98,7 @@ export default function FoodLogScreen() {
             />
           </View>
         </View>
-      </View>
+      </ScrollView>
     );
   }
 

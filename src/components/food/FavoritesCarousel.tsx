@@ -123,14 +123,14 @@ export function FavoritesCarousel({ onSelectFood }: FavoritesCarouselProps) {
       fontSize: 10,
     },
     addButton: {
-      backgroundColor: colors.primary,
+      backgroundColor: colors.gold,
       borderRadius: Spacing.borderRadius.sm,
       paddingVertical: Spacing.xs,
       alignItems: 'center',
     },
     addButtonText: {
       ...TextStyles.caption,
-      color: colors.textOnPrimary,
+      color: '#FFFFFF',
       fontWeight: '600',
       fontSize: 12,
     },
@@ -252,12 +252,7 @@ export function FavoritesCarousel({ onSelectFood }: FavoritesCarouselProps) {
       </View>
 
       <View style={styles.carouselContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContainer}
-          scrollEnabled={false} // Disable scroll, use navigation buttons instead
-        >
+        <View style={styles.scrollContainer}>
           <View style={styles.itemsContainer}>
             {currentPageItems.map((favorite) => {
               const multiplier = favorite.typical_portion_grams / 100;
@@ -323,7 +318,7 @@ export function FavoritesCarousel({ onSelectFood }: FavoritesCarouselProps) {
               );
             })}
           </View>
-        </ScrollView>
+        </View>
 
         {totalPages > 1 && (
           <View style={styles.navigationContainer}>
