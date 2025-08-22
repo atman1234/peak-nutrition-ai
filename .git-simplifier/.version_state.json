@@ -1,12 +1,32 @@
 {
-  "current_version": "0.1.0-alpha.11",
+  "current_version": "0.1.0-alpha.12",
   "version_type": "alpha",
   "major": 0,
   "minor": 1,
   "patch": 0,
-  "alpha": 11,
+  "alpha": 12,
   "beta": 0,
   "history": [
+    {
+      "version": "0.1.0-alpha.12",
+      "message": "fixed themeing of charts on web version",
+      "timestamp": "2025-08-22T15:43:07.480304+00:00",
+      "category": "Fixed",
+      "files_changed": [
+        {
+          "Modified": "src/components/charts/web/CalorieChart.tsx"
+        },
+        {
+          "Modified": "src/components/charts/web/WeightChart.tsx"
+        },
+        {
+          "Untracked": ".git_simplifier_backups/backup_20250822_084307.json"
+        },
+        {
+          "Untracked": "src/constants/theme.web.ts"
+        }
+      ]
+    },
     {
       "version": "0.1.0-alpha.11",
       "message": "fixed web bundling issues - added charts and analytics for web and user profile page",

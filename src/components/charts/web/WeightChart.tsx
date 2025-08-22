@@ -15,6 +15,7 @@ import {
 import { useWeightEntries } from '@/hooks/useWeightEntries'
 import { useProfile } from '@/hooks/useProfile'
 import { getLocalDateFromUTC } from '@/lib/date-utils'
+import { ChartWrapper, useChartTheme } from './ChartWrapper'
 
 interface WeightChartProps {
   days?: number // Number of days to show (default: 30)
@@ -25,6 +26,7 @@ interface WeightChartProps {
 export function WeightChart({ days = 30, showGoal = true, chartType = 'area' }: WeightChartProps) {
   const { weightEntries, displayUnits } = useWeightEntries()
   const { profile } = useProfile()
+  const chartTheme = useChartTheme()
 
   const chartData = useMemo(() => {
     if (weightEntries.length === 0) return []
@@ -132,25 +134,31 @@ export function WeightChart({ days = 30, showGoal = true, chartType = 'area' }: 
   const DataComponent = chartType === 'area' ? Area : Line
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <ChartComponent
-        data={chartData}
-        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
-        <XAxis 
-          dataKey="date" 
-          className="text-xs"
-          tick={{ fill: 'currentColor' }}
-        />
-        <YAxis 
-          domain={[minWeight, maxWeight]}
-          className="text-xs"
-          tick={{ fill: 'currentColor' }}
-          tickFormatter={(value) => `${value.toFixed(0)} ${displayUnits.weightSuffix}`}
-        />
-        <Tooltip content={<CustomTooltip />} />
-        <Legend />
+    <ChartWrapper>
+      <ResponsiveContainer width="100%" height={300}>
+        <ChartComponent
+          data={chartData}
+          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+          <XAxis 
+            dataKey="date" 
+            tick={{ fill: chartTheme.text, fontSize: 12 }}
+            axisLine={{ stroke: chartTheme.grid }}
+            tickLine={{ stroke: chartTheme.grid }}
+          />
+          <YAxis 
+            domain={[minWeight, maxWeight]}
+            tick={{ fill: chartTheme.text, fontSize: 12 }}
+            tickFormatter={(value) => `${value.toFixed(0)} ${displayUnits.weightSuffix}`}
+            axisLine={{ stroke: chartTheme.grid }}
+            tickLine={{ stroke: chartTheme.grid }}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend 
+            wrapperStyle={{ color: chartTheme.text }}
+            iconType="rect"
+          />
         
         {showGoal && profile?.target_weight && (
           <ReferenceLine 
@@ -174,5 +182,6 @@ export function WeightChart({ days = 30, showGoal = true, chartType = 'area' }: 
         />
       </ChartComponent>
     </ResponsiveContainer>
+    </ChartWrapper>
   )
 }

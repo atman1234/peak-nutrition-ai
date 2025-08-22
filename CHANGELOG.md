@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.12] - 2025-08-22 (Alpha)
+
+### Fixed | 2025-08-22 08:43:07
+
+- fixed themeing of charts on web version
+
+### Files Changed (4) | 2025-08-22 08:43:07
+
+- Modified: src/components/charts/web/CalorieChart.tsx
+- Modified: src/components/charts/web/WeightChart.tsx
+- Untracked: .git_simplifier_backups/backup_20250822_084307.json
+- Untracked: src/constants/theme.web.ts
+
 ## [0.1.0-alpha.11] - 2025-08-21 (Alpha)
 
 ### Added | 2025-08-21 20:23:26

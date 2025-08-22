@@ -149,41 +149,48 @@ export function CalorieChart({ days = 7, showTarget = true }: CalorieChartProps)
   const target = profile?.daily_calorie_target || 2000
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart
-        data={chartData}
-        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
-        <XAxis 
-          dataKey="date" 
-          className="text-xs"
-          tick={{ fill: 'currentColor' }}
-        />
-        <YAxis 
-          className="text-xs"
-          tick={{ fill: 'currentColor' }}
-          tickFormatter={(value) => `${value}`}
-        />
-        <Tooltip content={<CustomTooltip />} />
-        <Legend />
-        
-        {showTarget && (
-          <ReferenceLine 
-            y={target} 
-            stroke="#10b981" 
-            strokeDasharray="5 5"
-            label={{ value: "Target", position: "right", fill: '#10b981' }}
+    <ChartWrapper>
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart
+          data={chartData}
+          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+          <XAxis 
+            dataKey="date" 
+            tick={{ fill: chartTheme.text, fontSize: 12 }}
+            axisLine={{ stroke: chartTheme.grid }}
+            tickLine={{ stroke: chartTheme.grid }}
           />
-        )}
-        
-        <Bar
-          dataKey="calories"
-          fill="#f59e0b"
-          name="Calories"
-          radius={[4, 4, 0, 0]}
-        />
-      </BarChart>
-    </ResponsiveContainer>
+          <YAxis 
+            tick={{ fill: chartTheme.text, fontSize: 12 }}
+            tickFormatter={(value) => `${value}`}
+            axisLine={{ stroke: chartTheme.grid }}
+            tickLine={{ stroke: chartTheme.grid }}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend 
+            wrapperStyle={{ color: chartTheme.text }}
+            iconType="rect"
+          />
+          
+          {showTarget && (
+            <ReferenceLine 
+              y={target} 
+              stroke="#10b981" 
+              strokeDasharray="5 5"
+              label={{ value: "Target", position: "right", fill: '#10b981' }}
+            />
+          )}
+          
+          <Bar
+            dataKey="calories"
+            fill="#f59e0b"
+            name="Calories"
+            radius={[4, 4, 0, 0]}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    </ChartWrapper>
   )
 }
