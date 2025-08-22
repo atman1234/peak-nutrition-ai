@@ -14,10 +14,7 @@ module.exports = function (api) {
       [
         'module-resolver',
         {
-          alias: {
-            '@stripe/stripe-react-native': './src/services/stripe',
-          },
-          extensions: ['.js', '.jsx', '.ts', '.tsx', '.web.js', '.native.js']
+          extensions: ['.js', '.jsx', '.ts', '.tsx', '.web.js', '.web.ts', '.web.tsx', '.native.js', '.native.ts', '.native.tsx']
         }
       ],
       'react-native-reanimated/plugin',

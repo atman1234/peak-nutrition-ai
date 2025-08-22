@@ -1,0 +1,82 @@
+{
+  "timestamp": "2025-08-21T20:23:26.520220",
+  "current_branch": "main",
+  "commit_hash": "d3543482efaf15f5d550fa60a15262bfeb7a53f0",
+  "tags": [
+    "v0.1.0",
+    "v0.1.0-alpha.1",
+    "v0.1.0-alpha.10",
+    "v0.1.0-alpha.2",
+    "v0.1.0-alpha.3",
+    "v0.1.0-alpha.4",
+    "v0.1.0-alpha.5",
+    "v0.1.0-alpha.6",
+    "v0.1.0-alpha.7",
+    "v0.1.0-alpha.8",
+    "v0.1.0-alpha.9"
+  ],
+  "uncommitted_changes": {
+    "staged_files": [],
+    "modified_files": [
+      {
+        "status": "M",
+        "file": "babel.config.js"
+      },
+      {
+        "status": "M",
+        "file": "bun.lock"
+      },
+      {
+        "status": "M",
+        "file": "package.json"
+      },
+      {
+        "status": "M",
+        "file": "src/components/analytics/AIReviewTab.tsx"
+      },
+      {
+        "status": "M",
+        "file": "src/hooks/useStripeCheckout.ts"
+      },
+      {
+        "status": "D",
+        "file": "src/services/stripe/StripeProvider.native.js"
+      },
+      {
+        "status": "D",
+        "file": "src/services/stripe/StripeProvider.web.js"
+      },
+      {
+        "status": "D",
+        "file": "src/services/stripe/index.js"
+      }
+    ],
+    "untracked_files": [
+      "src/components/charts/CalorieChart.web.tsx",
+      "src/components/charts/ComparativeChart.web.tsx",
+      "src/components/charts/HistoricalGoalChart.web.tsx",
+      "src/components/charts/MacroChart.web.tsx",
+      "src/components/charts/MacroTrendsChart.web.tsx",
+      "src/components/charts/WeightChart.web.tsx",
+      "src/components/charts/common/WebChartPlaceholder.tsx",
+      "src/components/charts/web/CalorieChart.tsx",
+      "src/components/charts/web/ChartWrapper.tsx",
+      "src/components/charts/web/ComparativeChart.tsx",
+      "src/components/charts/web/ConsistencyHeatmap.tsx",
+      "src/components/charts/web/HistoricalGoalChart.tsx",
+      "src/components/charts/web/MacroChart.tsx",
+      "src/components/charts/web/MacroTrendsChart.tsx",
+      "src/components/charts/web/StreakChart.tsx",
+      "src/components/charts/web/WeightChart.tsx",
+      "src/services/stripe/index.native.js",
+      "src/services/stripe/index.web.js"
+    ],
+    "has_changes": true
+  },
+  "stash_count": 1,
+  "remote_branches": [
+    "origin/main"
+  ],
+  "operation_context": "increment_to_0.1.0-alpha.11",
+  "backup_id": "backup_20250821_202326"
+}

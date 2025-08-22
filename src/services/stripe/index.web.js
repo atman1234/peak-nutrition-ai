@@ -18,7 +18,16 @@ export const StripeProvider = ({ children, publishableKey }) => {
   );
 };
 
-export const useStripe = () => useContext(StripeContext);
+export const useStripe = () => {
+  const stripe = useContext(StripeContext);
+  
+  // Return an object that matches the native interface
+  return {
+    initPaymentSheet: async () => ({ error: null }),
+    presentPaymentSheet: async () => ({ error: null }),
+    stripe
+  };
+};
 
 // Mock CardField for web - you can implement a proper web form here
 export const CardField = ({ onCardChange, ...props }) => {

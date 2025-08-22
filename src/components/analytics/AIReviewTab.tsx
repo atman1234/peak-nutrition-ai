@@ -129,7 +129,7 @@ export const AIReviewTab: React.FC<AIReviewTabProps> = () => {
       maxWidth: 300,
     },
     generateButton: {
-      backgroundColor: colors.primary,
+      backgroundColor: '#8B5CF6',  // Purple color that works in both themes
       paddingHorizontal: 28,
       paddingVertical: 14,
       borderRadius: 12,

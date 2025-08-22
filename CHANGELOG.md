@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.11] - 2025-08-21 (Alpha)
+
+### Added | 2025-08-21 20:23:26
+
+- fixed web bundling issues - added charts and analytics for web and user profile page
+
 ## [0.1.0-alpha.10] - 2025-08-21 (Alpha)
 
 ### Fixed | 2025-08-21 13:05:49

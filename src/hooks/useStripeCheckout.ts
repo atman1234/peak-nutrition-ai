@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Alert } from 'react-native'
-import { useStripe } from '@stripe/stripe-react-native'
+import { useStripe } from '../services/stripe'
 import { useAuthContext } from '../components/auth/AuthContext'
 import { createCheckoutSession, STRIPE_PRICE_IDS, initializePaymentSheet } from '../lib/stripe'
 

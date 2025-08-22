@@ -1,12 +1,101 @@
 {
-  "current_version": "0.1.0-alpha.10",
+  "current_version": "0.1.0-alpha.11",
   "version_type": "alpha",
   "major": 0,
   "minor": 1,
   "patch": 0,
-  "alpha": 10,
+  "alpha": 11,
   "beta": 0,
   "history": [
+    {
+      "version": "0.1.0-alpha.11",
+      "message": "fixed web bundling issues - added charts and analytics for web and user profile page",
+      "timestamp": "2025-08-22T03:23:26.774413+00:00",
+      "category": "Added",
+      "files_changed": [
+        {
+          "Modified": "babel.config.js"
+        },
+        {
+          "Modified": "bun.lock"
+        },
+        {
+          "Modified": "package.json"
+        },
+        {
+          "Modified": "src/components/analytics/AIReviewTab.tsx"
+        },
+        {
+          "Modified": "src/hooks/useStripeCheckout.ts"
+        },
+        {
+          "Deleted": "src/services/stripe/StripeProvider.native.js"
+        },
+        {
+          "Deleted": "src/services/stripe/StripeProvider.web.js"
+        },
+        {
+          "Deleted": "src/services/stripe/index.js"
+        },
+        {
+          "Untracked": ".git_simplifier_backups/backup_20250821_202326.json"
+        },
+        {
+          "Untracked": "src/components/charts/CalorieChart.web.tsx"
+        },
+        {
+          "Untracked": "src/components/charts/ComparativeChart.web.tsx"
+        },
+        {
+          "Untracked": "src/components/charts/HistoricalGoalChart.web.tsx"
+        },
+        {
+          "Untracked": "src/components/charts/MacroChart.web.tsx"
+        },
+        {
+          "Untracked": "src/components/charts/MacroTrendsChart.web.tsx"
+        },
+        {
+          "Untracked": "src/components/charts/WeightChart.web.tsx"
+        },
+        {
+          "Untracked": "src/components/charts/common/WebChartPlaceholder.tsx"
+        },
+        {
+          "Untracked": "src/components/charts/web/CalorieChart.tsx"
+        },
+        {
+          "Untracked": "src/components/charts/web/ChartWrapper.tsx"
+        },
+        {
+          "Untracked": "src/components/charts/web/ComparativeChart.tsx"
+        },
+        {
+          "Untracked": "src/components/charts/web/ConsistencyHeatmap.tsx"
+        },
+        {
+          "Untracked": "src/components/charts/web/HistoricalGoalChart.tsx"
+        },
+        {
+          "Untracked": "src/components/charts/web/MacroChart.tsx"
+        },
+        {
+          "Untracked": "src/components/charts/web/MacroTrendsChart.tsx"
+        },
+        {
+          "Untracked": "src/components/charts/web/StreakChart.tsx"
+        },
+        {
+          "Untracked": "src/components/charts/web/WeightChart.tsx"
+        },
+        {
+          "Untracked": "src/services/stripe/index.native.js"
+        },
+        {
+          "Untracked": "src/services/stripe/index.web.js"
+        }
+      ]
+    },
     {
       "version": "0.1.0-alpha.10",
       "message": "fixed web bundling issues",
